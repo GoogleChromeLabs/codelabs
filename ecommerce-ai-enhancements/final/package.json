@@ -1,0 +1,17 @@
+{
+  "name": "montreal",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@types/dom-chromium-ai": "^0.0.17",
+    "typescript": "~6.0.2",
+    "vite": "^8.2.2",
+    "webmcp-types": "^0.1.6"
+  }
+}

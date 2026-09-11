@@ -1,0 +1,1 @@
+../../../../final/src/components/product/SpecsTable.ts

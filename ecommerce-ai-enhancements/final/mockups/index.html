@@ -1,0 +1,1428 @@
+<!DOCTYPE html>
+<!--
+ Copyright 2026 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+     https://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mont-Royal Plein Air — Outfitter & Technical Gear</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,400;0,700;0,900;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f5f2eb;
+      --surface: #ffffff;
+      --surface-warm: #ede8dc;
+      --forest-primary: #1b3b2b;
+      --forest-dark: #12281d;
+      --forest-light: #2c5942;
+      --terracotta: #b5471e;
+      --terracotta-hover: #9c3c18;
+      --text: #1e2922;
+      --text-muted: #48594e;
+      --border: #dfd9cb;
+      --border-dark: #c5bda9;
+      --font-serif: 'Merriweather', Georgia, serif;
+      --font-sans: 'Plus Jakarta Sans', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font-sans); font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+    .skip-link { position: absolute; top: -40px; left: 16px; background: var(--terracotta); color: #fff; padding: 8px 16px; border-radius: 4px; font-weight: 700; z-index: 200; text-decoration: none; transition: top 0.2s; }
+    .skip-link:focus { top: 16px; }
+
+    /* Main Header */
+    header {
+      background: var(--surface);
+      border-bottom: 2px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      padding: 16px 36px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    }
+    .brand { display: flex; align-items: center; gap: 14px; background: none; border: none; cursor: pointer; text-align: left; }
+    .brand-emblem {
+      width: 40px; height: 40px;
+      background: var(--forest-primary);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--bg);
+      font-family: var(--font-serif);
+      font-weight: 900;
+      font-size: 20px;
+    }
+    .brand-title { font-family: var(--font-serif); font-size: 20px; font-weight: 900; color: var(--forest-primary); letter-spacing: -0.5px; }
+    .brand-sub { font-size: 11px; color: var(--terracotta); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    .nav-links { display: flex; gap: 20px; }
+    .nav-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 14px;
+      font-weight: 600;
+      font-family: var(--font-sans);
+      cursor: pointer;
+      padding: 6px 0;
+      transition: color 0.15s;
+    }
+    .nav-btn:hover, .nav-btn.active { color: var(--forest-primary); font-weight: 700; }
+
+    .header-search { flex: 1; max-width: 380px; position: relative; }
+    .search-input {
+      width: 100%;
+      background: var(--surface-warm);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 9px 16px 9px 38px;
+      color: var(--text);
+      font-size: 13px;
+      font-family: var(--font-sans);
+      outline: none;
+      transition: all 0.2s;
+    }
+    .search-input:focus { border-color: var(--forest-primary); background: #fff; box-shadow: 0 0 0 2px rgba(27,59,43,0.12); }
+    .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 12px; color: var(--text-muted); pointer-events: none; }
+
+    .header-actions { display: flex; align-items: center; gap: 14px; }
+    .lang-select {
+      background: var(--surface-warm);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 7px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: var(--font-sans);
+      cursor: pointer;
+    }
+
+    .cart-trigger-btn {
+      background: var(--forest-primary);
+      color: #fff;
+      border: none;
+      padding: 9px 18px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      font-family: var(--font-sans);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: background 0.15s;
+    }
+    .cart-trigger-btn:hover { background: var(--forest-light); }
+    .cart-badge { background: var(--terracotta); color: #fff; font-size: 11px; padding: 2px 7px; border-radius: 12px; font-weight: 800; }
+
+    /* Page View Containers */
+    .page-view { display: none; }
+    .page-view.active { display: block; }
+
+    /* ==========================================================================
+       1. HOME PAGE
+       ========================================================================== */
+    .hero-section {
+      background: linear-gradient(180deg, var(--surface-warm) 0%, var(--bg) 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 64px 36px 56px;
+      text-align: center;
+    }
+    .hero-container { max-width: 780px; margin: 0 auto; }
+    .hero-eyebrow { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--terracotta); margin-bottom: 12px; }
+    .hero-title { font-family: var(--font-serif); font-size: 40px; font-weight: 900; color: var(--forest-dark); margin-bottom: 16px; line-height: 1.15; }
+    .hero-subtitle { font-size: 16px; color: var(--text-muted); margin-bottom: 32px; line-height: 1.6; }
+
+    /* Integrated Adventure Search Box */
+    .adventure-box {
+      background: #ffffff;
+      border: 2px solid var(--border-dark);
+      border-radius: 10px;
+      padding: 8px 8px 8px 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+      margin-bottom: 16px;
+    }
+    .adventure-icon { font-size: 18px; color: var(--forest-primary); }
+    .adventure-input {
+      flex: 1;
+      border: none;
+      outline: none;
+      font-size: 14px;
+      font-family: var(--font-sans);
+      color: var(--text);
+      background: transparent;
+    }
+    .adventure-submit {
+      background: var(--terracotta);
+      color: #fff;
+      border: none;
+      padding: 11px 22px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      font-family: var(--font-sans);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .adventure-submit:hover { background: var(--terracotta-hover); }
+
+    .quick-prompts { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; font-size: 12px; color: var(--text-muted); }
+    .prompt-chip {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 4px 10px;
+      border-radius: 16px;
+      cursor: pointer;
+      color: var(--forest-primary);
+      font-weight: 600;
+      transition: all 0.15s;
+    }
+    .prompt-chip:hover { border-color: var(--forest-primary); background: var(--surface-warm); }
+
+    /* Home Categories Grid */
+    .home-section { max-width: 1200px; margin: 48px auto; padding: 0 36px; }
+    .section-head { margin-bottom: 24px; }
+    .section-title { font-family: var(--font-serif); font-size: 24px; font-weight: 900; color: var(--forest-primary); }
+
+    .category-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+    .cat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 24px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .cat-card:hover { transform: translateY(-3px); box-shadow: 0 6px 16px rgba(0,0,0,0.06); border-color: var(--border-dark); }
+    .cat-icon { width: 56px; height: 56px; background: var(--surface-warm); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 14px; }
+    .cat-icon svg { width: 28px; height: 28px; fill: var(--forest-primary); }
+    .cat-name { font-family: var(--font-serif); font-size: 16px; font-weight: 700; color: var(--forest-dark); margin-bottom: 4px; }
+    .cat-count { font-size: 12px; color: var(--text-muted); }
+
+    /* ==========================================================================
+       2. STANDALONE CATEGORY PAGE
+       ========================================================================== */
+    .category-page-container { max-width: 1200px; margin: 36px auto; padding: 0 36px; }
+    .category-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 24px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid var(--border);
+    }
+    .cat-page-title { font-family: var(--font-serif); font-size: 28px; font-weight: 900; color: var(--forest-primary); }
+    .cat-item-count { font-size: 13px; color: var(--text-muted); font-weight: 600; }
+
+    /* Full-width Category Grid */
+    .category-products-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+
+    /* ==========================================================================
+       3. STANDALONE SEARCH & FACETED SEARCH PAGE (DYNAMIC FACET COUNTS)
+       ========================================================================== */
+    .search-layout { display: flex; min-height: calc(100vh - 100px); }
+    
+    .facet-sidebar {
+      width: 280px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 24px 20px;
+      flex-shrink: 0;
+    }
+    .facet-sidebar-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid var(--surface-warm); }
+    .facet-heading { font-family: var(--font-serif); font-size: 15px; font-weight: 700; color: var(--forest-primary); }
+    .reset-btn { font-size: 12px; color: var(--terracotta); background: none; border: none; font-weight: 700; cursor: pointer; }
+
+    .facet-section { margin-bottom: 22px; }
+    .facet-title { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 10px; }
+    .facet-list { display: flex; flex-direction: column; gap: 6px; }
+    .facet-row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--text); cursor: pointer; user-select: none; padding: 2px 0; }
+    .facet-row:hover { color: var(--forest-primary); font-weight: 600; }
+    .facet-row.disabled { opacity: 0.45; cursor: default; }
+    .facet-check { display: flex; align-items: center; gap: 8px; }
+    .custom-check { width: 16px; height: 16px; border: 1.5px solid var(--border-dark); border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; background: #fff; font-size: 11px; }
+    .custom-check.checked { background: var(--forest-primary); border-color: var(--forest-primary); color: #fff; font-weight: 900; }
+    .facet-count { font-size: 11px; color: var(--text-muted); font-family: var(--font-mono); }
+
+    .cond-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+    .cond-btn {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 8px;
+      background: var(--surface-warm);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text);
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .cond-btn:hover { border-color: var(--forest-primary); color: var(--forest-primary); }
+    .cond-btn.active { background: var(--forest-primary); color: #fff; border-color: var(--forest-primary); }
+    .cond-btn.disabled { opacity: 0.45; cursor: default; }
+    .cond-count { font-size: 10px; font-family: var(--font-mono); opacity: 0.8; }
+
+    .search-viewport { flex: 1; padding: 28px 36px; background: var(--bg); overflow-y: auto; }
+    .search-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 20px; }
+    .search-results-title { font-family: var(--font-serif); font-size: 24px; font-weight: 900; color: var(--forest-primary); }
+    .search-item-count { font-size: 12px; color: var(--text-muted); }
+
+    .search-product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
+
+    /* Universal Product Card */
+    .product-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+      transition: transform 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+    }
+    .product-card:hover { transform: translateY(-3px); box-shadow: 0 6px 16px rgba(0,0,0,0.08); border-color: var(--border-dark); }
+
+    .card-photo {
+      height: 180px;
+      background: var(--surface-warm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .card-photo svg { width: 70px; height: 70px; fill: var(--forest-primary); opacity: 0.65; }
+    .photo-category {
+      position: absolute;
+      top: 10px; left: 10px;
+      background: #fff;
+      padding: 2px 7px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--forest-primary);
+      border-radius: 3px;
+      border: 1px solid var(--border);
+    }
+    .photo-weight {
+      position: absolute;
+      bottom: 10px; right: 10px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: rgba(255,255,255,0.9);
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: var(--font-mono);
+    }
+
+    .card-content { padding: 16px; flex: 1; display: flex; flex-direction: column; }
+    .card-conds { display: flex; gap: 4px; margin-bottom: 8px; flex-wrap: wrap; }
+    .card-cond-tag { font-size: 10px; font-weight: 600; padding: 2px 6px; background: var(--surface-warm); color: var(--text-muted); border-radius: 3px; }
+    .card-name { font-family: var(--font-serif); font-size: 15px; font-weight: 700; color: var(--forest-dark); margin-bottom: 6px; line-height: 1.3; }
+    .card-desc { font-size: 12px; color: var(--text-muted); margin-bottom: 14px; flex: 1; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+    .card-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid var(--surface-warm); }
+    .card-price { font-family: var(--font-serif); font-size: 16px; font-weight: 900; color: var(--forest-primary); }
+    .quick-add-btn {
+      background: var(--surface-warm);
+      color: var(--forest-primary);
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .quick-add-btn:hover { background: var(--terracotta); color: #fff; border-color: var(--terracotta); }
+
+    /* ==========================================================================
+       4. PRODUCT DETAILS PAGE (PDP)
+       ========================================================================== */
+    .pdp-container { max-width: 1100px; margin: 36px auto; padding: 0 36px; }
+    .breadcrumbs { display: flex; gap: 8px; align-items: center; font-size: 13px; color: var(--text-muted); margin-bottom: 24px; font-weight: 600; }
+    .breadcrumbs a { color: var(--forest-primary); text-decoration: none; cursor: pointer; }
+    .breadcrumbs a:hover { text-decoration: underline; }
+    .breadcrumbs span { color: var(--text); font-weight: 700; }
+
+    .pdp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 44px; margin-bottom: 48px; }
+    .pdp-hero-image { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; height: 400px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+    .pdp-hero-image svg { width: 150px; height: 150px; fill: var(--forest-primary); opacity: 0.7; }
+
+    .pdp-title { font-family: var(--font-serif); font-size: 28px; font-weight: 900; color: var(--forest-dark); margin-bottom: 12px; line-height: 1.2; }
+    .pdp-meta-line { display: flex; gap: 16px; align-items: center; margin-bottom: 16px; }
+    .pdp-price-val { font-family: var(--font-serif); font-size: 26px; font-weight: 900; color: var(--terracotta); }
+    .pdp-stars { color: #d97706; font-size: 13px; font-weight: 600; }
+    .pdp-narrative { font-size: 14px; color: var(--text); margin-bottom: 20px; line-height: 1.6; }
+
+    .pdp-specs { width: 100%; border-collapse: collapse; margin-bottom: 24px; font-size: 13px; }
+    .pdp-specs tr { border-bottom: 1px solid var(--border); }
+    .pdp-specs th { text-align: left; padding: 8px 0; color: var(--text-muted); font-weight: 600; width: 40%; }
+    .pdp-specs td { padding: 8px 0; color: var(--forest-dark); font-weight: 700; }
+
+    .pdp-add-action {
+      width: 100%;
+      background: var(--forest-primary);
+      color: #fff;
+      border: none;
+      padding: 14px;
+      font-size: 14px;
+      font-weight: 700;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .pdp-add-action:hover { background: var(--forest-light); }
+
+    /* "For You" Section */
+    .for-you-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 28px;
+      margin-top: 36px;
+    }
+    .for-you-title { font-family: var(--font-serif); font-size: 20px; font-weight: 900; color: var(--forest-primary); margin-bottom: 20px; }
+    .for-you-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+
+    /* ==========================================================================
+       5. CART DRAWER
+       ========================================================================== */
+    .cart-overlay {
+      position: fixed; top: 0; right: 0; bottom: 0; left: 0;
+      background: rgba(18, 40, 29, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      display: none;
+    }
+    .cart-drawer {
+      position: fixed; top: 0; right: 0; bottom: 0;
+      width: 440px;
+      background: var(--bg);
+      border-left: 2px solid var(--border);
+      z-index: 101;
+      display: none;
+      flex-direction: column;
+      box-shadow: -8px 0 24px rgba(0,0,0,0.15);
+    }
+    .cart-header { padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #fff; }
+    .cart-header h2 { font-family: var(--font-serif); font-size: 16px; font-weight: 900; color: var(--forest-primary); }
+    .cart-close-btn { background: none; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer; }
+
+    .cart-items-list { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
+    .cart-line-item { display: flex; gap: 12px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+    .cart-item-thumb { width: 56px; height: 56px; background: var(--surface-warm); border-radius: 4px; display: flex; align-items: center; justify-content: center; }
+    .cart-item-thumb svg { width: 28px; height: 28px; fill: var(--forest-primary); }
+    .cart-item-info { flex: 1; }
+    .cart-item-name { font-family: var(--font-serif); font-size: 13px; font-weight: 700; color: var(--forest-dark); }
+    .cart-item-qty-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+    .qty-btn { width: 22px; height: 22px; border: 1px solid var(--border); background: #fff; border-radius: 3px; font-weight: 700; cursor: pointer; }
+    .cart-item-price { font-family: var(--font-serif); font-size: 14px; font-weight: 900; color: var(--terracotta); }
+
+    .incart-for-you { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 14px; margin-top: 10px; }
+    .incart-for-you-title { font-family: var(--font-serif); font-size: 13px; font-weight: 700; color: var(--forest-primary); margin-bottom: 10px; }
+    .incart-card { display: flex; gap: 10px; align-items: center; padding: 8px; background: var(--surface-warm); border-radius: 4px; margin-bottom: 8px; }
+    .incart-thumb { width: 40px; height: 40px; background: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border-radius: 3px; }
+    .incart-thumb svg { width: 20px; height: 20px; fill: var(--forest-primary); }
+    .incart-info { flex: 1; }
+    .incart-name { font-size: 12px; font-weight: 700; color: var(--forest-dark); }
+    .incart-price { font-family: var(--font-serif); font-size: 12px; font-weight: 900; color: var(--terracotta); }
+
+    .cart-footer { padding: 20px; border-top: 1px solid var(--border); background: #fff; }
+    .order-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
+    .order-total-row { display: flex; justify-content: space-between; font-family: var(--font-serif); font-size: 16px; font-weight: 900; color: var(--forest-primary); margin-top: 10px; margin-bottom: 14px; }
+    .checkout-btn { width: 100%; background: var(--terracotta); color: #fff; border: none; padding: 14px; font-size: 14px; font-weight: 700; border-radius: 6px; cursor: pointer; }
+    .checkout-btn:hover { background: var(--terracotta-hover); }
+  </style>
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <!-- Header -->
+  <header role="banner">
+    <button class="brand" onclick="app.showHome()" aria-label="Mont-Royal Plein Air Home">
+      <div class="brand-emblem" aria-hidden="true">M</div>
+      <div>
+        <div class="brand-title">Mont-Royal Plein Air</div>
+        <div class="brand-sub">Expedition Outfitter</div>
+      </div>
+    </button>
+
+    <nav class="nav-links" aria-label="Main Navigation">
+      <button class="nav-btn" onclick="app.showCategory('Tents')">Tents</button>
+      <button class="nav-btn" onclick="app.showCategory('Sleeping Bags')">Sleeping Bags</button>
+      <button class="nav-btn" onclick="app.showCategory('Backpacks')">Backpacks</button>
+      <button class="nav-btn" onclick="app.showCategory('Apparel')">Apparel</button>
+      <button class="nav-btn" onclick="app.showCategory('Camp Kitchen')">Camp Kitchen</button>
+    </nav>
+
+    <!-- Header Search Bar -->
+    <div class="header-search" role="search">
+      <label for="header-search-input" class="sr-only">Search gear, apparel, conditions</label>
+      <span class="search-icon" aria-hidden="true">🔍</span>
+      <input type="text" id="header-search-input" class="search-input" placeholder="Search gear, clothing, tents..." onkeydown="if(event.key==='Enter') app.showSearch(this.value)">
+    </div>
+
+    <div class="header-actions">
+      <select class="lang-select" aria-label="Language Selector">
+        <option>English</option>
+        <option>Français</option>
+        <option>Español</option>
+        <option>Deutsch</option>
+        <option>日本語</option>
+      </select>
+
+      <button class="cart-trigger-btn" onclick="app.toggleCart()" aria-label="Shopping Cart">
+        <span>Cart</span>
+        <span class="cart-badge" id="cart-badge-count">2</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ==========================================================================
+       VIEW 1: STANDALONE HOME LANDING PAGE
+       ========================================================================== -->
+  <main class="page-view active" id="home-view">
+    <section class="hero-section">
+      <div class="hero-container">
+        <div class="hero-eyebrow">Handcrafted Backcountry Gear</div>
+        <h1 class="hero-title">Equipped for the North</h1>
+        <p class="hero-subtitle">High-performance expedition gear built to withstand freezing alpine ridges, rugged portages, and unpredictable weather.</p>
+
+        <!-- Integrated Adventure Search -->
+        <div class="adventure-box">
+          <span class="adventure-icon" aria-hidden="true">🏔</span>
+          <input type="text" id="home-adventure-input" class="adventure-input" placeholder="Describe your adventure (e.g. 3-day autumn bikepacking in freezing rain)..." onkeydown="if(event.key==='Enter') app.handleAdventureSearch()">
+          <button class="adventure-submit" onclick="app.handleAdventureSearch()">Find Gear</button>
+        </div>
+
+        <div class="quick-prompts">
+          <span>Try:</span>
+          <button class="prompt-chip" onclick="app.fillAdventurePrompt('Winter mountaineering and sub-zero summit camp in the Chic-Chocs')">Winter Mountaineering (-10°C)</button>
+          <button class="prompt-chip" onclick="app.fillAdventurePrompt('Canoe portage tripping through rapids in rainy weather')">Canoe Rapids Tripping</button>
+          <button class="prompt-chip" onclick="app.fillAdventurePrompt('Ultralight fastpacking trail traverse under 500g')">Ultralight Fastpacking</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Categories Grid -->
+    <section class="home-section">
+      <div class="section-head">
+        <h2 class="section-title">Shop by Category</h2>
+      </div>
+      <div class="category-cards">
+        <div class="cat-card" onclick="app.showCategory('Tents')">
+          <div class="cat-icon"><svg viewBox="0 0 24 24"><path d="M12 3L2 20h20L12 3zm0 3.5l6.5 11.5H5.5L12 6.5z"/></svg></div>
+          <div class="cat-name">Tents & Tarps</div>
+          <div class="cat-count">6 items</div>
+        </div>
+        <div class="cat-card" onclick="app.showCategory('Sleeping Bags')">
+          <div class="cat-icon"><svg viewBox="0 0 24 24"><path d="M12 2C8 2 5 6 5 11v9c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2v-9c0-5-3-9-7-9z"/></svg></div>
+          <div class="cat-name">Sleep Systems</div>
+          <div class="cat-count">6 items</div>
+        </div>
+        <div class="cat-card" onclick="app.showCategory('Backpacks')">
+          <div class="cat-icon"><svg viewBox="0 0 24 24"><path d="M20 6h-4V4c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z"/></svg></div>
+          <div class="cat-name">Expedition Packs</div>
+          <div class="cat-count">10 items</div>
+        </div>
+        <div class="cat-card" onclick="app.showCategory('Apparel')">
+          <div class="cat-icon"><svg viewBox="0 0 24 24"><path d="M16 2l-4 4-4-4-6 4v16h20V6l-6-4z"/></svg></div>
+          <div class="cat-name">Technical Apparel</div>
+          <div class="cat-count">14 items</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Featured Curated Essentials -->
+    <section class="home-section">
+      <div class="section-head">
+        <h2 class="section-title">Backcountry Essentials</h2>
+      </div>
+      <div class="search-product-grid" id="home-featured-grid"></div>
+    </section>
+  </main>
+
+  <!-- ==========================================================================
+       VIEW 2: STANDALONE CATEGORY PAGE
+       ========================================================================== -->
+  <main class="page-view" id="category-view">
+    <div class="category-page-container">
+      <div class="category-header">
+        <h1 class="cat-page-title" id="cat-page-title">Tents</h1>
+        <span id="cat-page-count" class="cat-item-count">6 items</span>
+      </div>
+
+      <div class="category-products-grid" id="category-grid"></div>
+    </div>
+  </main>
+
+  <!-- ==========================================================================
+       VIEW 3: STANDALONE SEARCH & FACETED SEARCH PAGE (DYNAMIC FACET COUNTS)
+       ========================================================================== -->
+  <main class="page-view" id="search-view">
+    <div class="search-layout">
+      <!-- Faceted Search Sidebar -->
+      <aside class="facet-sidebar" aria-label="Search Filters">
+        <div class="facet-sidebar-header">
+          <h2 class="facet-heading">Filters</h2>
+          <button class="reset-btn" onclick="app.resetFilters()">Reset All</button>
+        </div>
+
+        <div class="facet-section">
+          <div class="facet-title">Category</div>
+          <div class="facet-list" id="category-facets"></div>
+        </div>
+
+        <div class="facet-section">
+          <div class="facet-title">Activity</div>
+          <div class="facet-list" id="activity-facets"></div>
+        </div>
+
+        <div class="facet-section">
+          <div class="facet-title">Conditions</div>
+          <div class="cond-grid" id="condition-facets"></div>
+        </div>
+
+        <div class="facet-section">
+          <div class="facet-title">Weight</div>
+          <div class="facet-list" id="weight-facets"></div>
+        </div>
+
+        <div class="facet-section">
+          <div class="facet-title">Price</div>
+          <div class="facet-list" id="price-facets"></div>
+        </div>
+
+        <div class="facet-section">
+          <div class="facet-title">Rating</div>
+          <div class="facet-list" id="rating-facets"></div>
+        </div>
+      </aside>
+
+      <!-- Search Results Area -->
+      <div class="search-viewport">
+        <div class="search-top">
+          <h1 class="search-results-title" id="search-heading">All Gear</h1>
+          <span class="search-item-count" id="search-count-label">Showing 75 items</span>
+        </div>
+
+        <div class="search-product-grid" id="search-product-grid"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ==========================================================================
+       VIEW 4: STANDALONE PRODUCT DETAILS PAGE (PDP)
+       ========================================================================== -->
+  <main class="page-view" id="pdp-view">
+    <div class="pdp-container">
+      <!-- Real Hierarchical Breadcrumbs: Home / Category / Product -->
+      <nav class="breadcrumbs" id="pdp-breadcrumbs" aria-label="Breadcrumb"></nav>
+      
+      <div class="pdp-grid">
+        <div class="pdp-hero-image" id="pdp-image">
+          <svg viewBox="0 0 24 24"><path d="M12 2C8 2 5 6 5 11v9c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2v-9c0-5-3-9-7-9z"/></svg>
+        </div>
+        <div>
+          <h1 class="pdp-title" id="pdp-name">Product Name</h1>
+          <div class="pdp-meta-line">
+            <span class="pdp-price-val" id="pdp-price">$0.00</span>
+            <span class="pdp-stars" id="pdp-rating">★★★★★ (120 reviews)</span>
+          </div>
+          <p class="pdp-narrative" id="pdp-desc">Description</p>
+
+          <table class="pdp-specs" id="pdp-specs-table"></table>
+
+          <button class="pdp-add-action" id="pdp-add-btn" onclick="app.addCurrentPDPToCart()">+ Add to Cart</button>
+        </div>
+      </div>
+
+      <!-- "For You" Recommendations Strip -->
+      <section class="for-you-section">
+        <h2 class="for-you-title">For You</h2>
+        <div class="for-you-grid" id="pdp-recs-grid"></div>
+      </section>
+    </div>
+  </main>
+
+  <!-- ==========================================================================
+       CART DRAWER
+       ========================================================================== -->
+  <div class="cart-overlay" id="cart-overlay" onclick="app.toggleCart()"></div>
+  <aside class="cart-drawer" id="cart-drawer" role="dialog" aria-modal="true" aria-labelledby="cart-heading">
+    <div class="cart-header">
+      <h2 id="cart-heading">Your Cart (<span id="cart-title-count">2</span>)</h2>
+      <button class="cart-close-btn" onclick="app.toggleCart()" aria-label="Close Cart">✕</button>
+    </div>
+
+    <div class="cart-items-list" id="cart-items-container"></div>
+
+    <!-- In-Cart "For You" Section -->
+    <div class="incart-for-you">
+      <h3 class="incart-for-you-title">For You</h3>
+      <div id="incart-recs-container"></div>
+    </div>
+
+    <div class="cart-footer">
+      <div class="order-row">
+        <span>Subtotal</span>
+        <span id="order-subtotal">$0.00</span>
+      </div>
+      <div class="order-row">
+        <span>Estimated Taxes (14.975%)</span>
+        <span id="order-taxes">$0.00</span>
+      </div>
+      <div class="order-row">
+        <span>Shipping</span>
+        <span style="color: var(--forest-primary); font-weight: 700;">FREE</span>
+      </div>
+      <div class="order-total-row">
+        <span>Total</span>
+        <span id="order-total">$0.00</span>
+      </div>
+      <button class="checkout-btn" onclick="alert('Proceeding to checkout flow...')">Proceed to Checkout</button>
+    </div>
+  </aside>
+
+  <!-- Complete 75-Item Catalog Dataset & Application Controller -->
+  <script>
+    const CATALOG = [
+      { id: "tent-mont-tremblant-3p", name: "Mont-Tremblant 3-Season Expedition Tent", category: "Tents", activity: "Backpacking", conditions: ["Rain / Wet", "Wind", "Cold"], weightGrams: 2150, weightLabel: "2.15 kg", price: 349.99, rating: 4.9, reviews: 128, desc: "3-Person, 2.15kg double-wall ripstop shelter with DAC Featherlite poles and 3000mm waterproofing.", specs: { Capacity: "3 Person", "Minimum Weight": "2.15 kg", Waterproofing: "3000mm Fly / 5000mm Floor", Poles: "DAC Featherlite NSL" } },
+      { id: "tent-gaspesie-ultralight-2p", name: "Gaspésie Ultralight 2P Backpacking Tent", category: "Tents", activity: "Backpacking", conditions: ["Mild", "Wind", "Rain / Wet"], weightGrams: 1280, weightLabel: "1.28 kg", price: 289.99, rating: 4.8, reviews: 95, desc: "Sub-1.3kg freestanding 2-person tent engineered for long-distance thru-hiking and alpine ridges.", specs: { Capacity: "2 Person", "Minimum Weight": "1.28 kg", Waterproofing: "2000mm Fly", Poles: "Carbon Composite" } },
+      { id: "tent-laurentian-family-4p", name: "Laurentian 4-Person Basecamp Tent", category: "Tents", activity: "Camping", conditions: ["Mild", "Dry"], weightGrams: 6800, weightLabel: "6.80 kg", price: 429.99, rating: 4.7, reviews: 64, desc: "Stand-up height (185cm) 4-person tent with large screen porch vestibule for family camping.", specs: { Capacity: "4 Person", "Peak Height": "185 cm", Material: "68D Polyester Ripstop" } },
+      { id: "tarp-borealis-silnylon", name: "Borealis Ultralight Silnylon Camp Tarp (3x3m)", category: "Tents", activity: "Backpacking", conditions: ["Rain / Wet", "Wind"], weightGrams: 480, weightLabel: "480 g", price: 89.99, rating: 4.6, reviews: 42, desc: "480g 30D silicone-coated square tarp with 16 tie-outs for ultralight minimalist bivouacs.", specs: { Dimensions: "3m x 3m", Weight: "480 g", TieOuts: "16 Reinforced" } },
+      { id: "footprint-mont-tremblant-3p", name: "Mont-Tremblant 3P Custom Fitted Footprint", category: "Tents", activity: "Backpacking", conditions: ["Rain / Wet", "Cold"], weightGrams: 280, weightLabel: "280 g", price: 39.99, rating: 4.9, reviews: 88, desc: "70D protective groundsheet cut to protect tent floors from abrasive granite and damp ground.", specs: { Compatibility: "Mont-Tremblant 3P", Material: "70D Polyurethane Coated" } },
+      { id: "footprint-gaspesie-2p", name: "Gaspésie 2P Ultralight Tent Groundsheet", category: "Tents", activity: "Backpacking", conditions: ["Mild", "Rain / Wet"], weightGrams: 190, weightLabel: "190 g", price: 34.99, rating: 4.8, reviews: 51, desc: "190g fitted ultralight groundsheet tailored specifically for the Gaspésie 2P tent.", specs: { Compatibility: "Gaspésie 2P", Weight: "190 g" } },
+      { id: "sleepbag-taiga-down-minus10", name: "Taiga 800-Fill Down Sleeping Bag (-10°C)", category: "Sleeping Bags", activity: "Mountaineering", conditions: ["Sub-Zero", "Snow / Ice"], weightGrams: 1050, weightLabel: "1.05 kg", price: 299.99, rating: 4.9, reviews: 110, desc: "Sub-zero RDS water-repellent down mummy bag for late-fall and winter alpine expeditions.", specs: { "Comfort Limit": "-10°C (14°F)", Fill: "800-Fill Hydrophobic Down", Weight: "1.05 kg" } },
+      { id: "sleepbag-summit-synthetic-0", name: "Summit Synthetic 3-Season Bag (0°C)", category: "Sleeping Bags", activity: "Paddling", conditions: ["Cold", "Rain / Wet"], weightGrams: 1320, weightLabel: "1.32 kg", price: 159.99, rating: 4.6, reviews: 76, desc: "High-loft synthetic hollow-fiber mummy bag that maintains warmth in damp canoe trips.", specs: { "Comfort Limit": "0°C (32°F)", Fill: "ThermaLoft Synthetic", Weight: "1.32 kg" } },
+      { id: "sleepbag-solstice-summer-plus10", name: "Solstice Ultralight Summer Bag (+10°C)", category: "Sleeping Bags", activity: "Backpacking", conditions: ["Hot", "Mild", "Dry"], weightGrams: 650, weightLabel: "650 g", price: 119.99, rating: 4.5, reviews: 39, desc: "650g ultracompact summer bag that unzips flat into a warm-weather camp quilt.", specs: { "Comfort Limit": "+10°C (50°F)", Weight: "650 g" } },
+      { id: "pad-laurentian-thermal-insulated", name: "Laurentian Air Thermal Sleeping Pad (R-4.8)", category: "Sleeping Bags", activity: "Mountaineering", conditions: ["Sub-Zero", "Cold", "Snow / Ice"], weightGrams: 540, weightLabel: "540 g", price: 89.99, rating: 4.9, reviews: 145, desc: "8cm thick insulated air mattress with internal heat-reflective foil barrier (R-Value 4.8).", specs: { "R-Value": "4.8", Thickness: "8 cm", Weight: "540 g" } },
+      { id: "pad-ultralight-foam-flex", name: "FlexLite Closed-Cell Foam Camp Mat", category: "Sleeping Bags", activity: "Backpacking", conditions: ["Mild", "Cold", "Dry"], weightGrams: 390, weightLabel: "390 g", price: 34.99, rating: 4.4, reviews: 62, desc: "Accordion-folding 390g puncture-proof EVA foam mat with heat-trapping dimples (R-Value 2.0).", specs: { "R-Value": "2.0", Weight: "390 g" } },
+      { id: "chair-camp-compact-aluminum", name: "St-Donat Ultralight Folding Camp Chair", category: "Tents", activity: "Camping", conditions: ["Mild", "Dry"], weightGrams: 890, weightLabel: "890 g", price: 69.99, rating: 4.7, reviews: 84, desc: "890g shock-corded aluminum camp chair supporting up to 135kg.", specs: { Weight: "890 g", Capacity: "135 kg" } },
+      { id: "pack-expedition-trans-canada-65l", name: "Trans-Canada 65L Expedition Backpack", category: "Backpacks", activity: "Backpacking", conditions: ["Cold", "Rain / Wet", "Wind"], weightGrams: 2180, weightLabel: "2.18 kg", price: 269.99, rating: 4.8, reviews: 112, desc: "Heavy-haul 65L pack with pivoting lumbar hipbelt and bottom sleeping bag compartment.", specs: { Volume: "65 Litres", Weight: "2.18 kg", Frame: "Internal Aluminum" } },
+      { id: "pack-weekend-chic-chocs-38l", name: "Chic-Chocs 38L Alpine Trekking Pack", category: "Backpacks", activity: "Mountaineering", conditions: ["Cold", "Snow / Ice", "Wind"], weightGrams: 1150, weightLabel: "1.15 kg", price: 179.99, rating: 4.9, reviews: 78, desc: "38L roll-top alpine pack for weekend overnight trips and technical ridge traverses.", specs: { Volume: "38 Litres", Weight: "1.15 kg" } },
+      { id: "pack-day-mont-royal-18l", name: "Mont-Royal 18L Summit Daypack", category: "Backpacks", activity: "Hiking", conditions: ["Mild", "Dry", "Rain / Wet"], weightGrams: 520, weightLabel: "520 g", price: 79.99, rating: 4.7, reviews: 150, desc: "520g sleek daypack with hydration/laptop sleeve and breathable air-mesh back.", specs: { Volume: "18 Litres", Weight: "520 g" } },
+      { id: "vest-trail-marathon-hydration-12l", name: "Endurance 12L Trail Running Hydration Vest", category: "Backpacks", activity: "Trail Running", conditions: ["Hot", "Mild", "Dry"], weightGrams: 225, weightLabel: "225 g", price: 129.99, rating: 4.8, reviews: 68, desc: "225g bounce-free running vest with twin 500ml soft flasks included.", specs: { Volume: "12 Litres", Weight: "225 g", Flasks: "2x 500ml Included" } },
+      { id: "drybag-st-lawrence-20l", name: "St. Lawrence River 20L Heavy-Duty Dry Bag", category: "Backpacks", activity: "Paddling", conditions: ["Rain / Wet", "Cold"], weightGrams: 380, weightLabel: "380 g", price: 29.99, rating: 4.9, reviews: 92, desc: "IPX7 submersible 500D PVC roll-top dry bag with shoulder sling for canoe rapids.", specs: { Waterproofing: "IPX7 Submersible", Volume: "20 Litres" } },
+      { id: "drybag-ultralight-set-3p", name: "Pack-Tite Ultralight Dry Bag 3-Pack (5/10/15L)", category: "Backpacks", activity: "Backpacking", conditions: ["Rain / Wet", "Cold"], weightGrams: 108, weightLabel: "108 g", price: 39.99, rating: 4.8, reviews: 63, desc: "Translucent 30D siliconized Cordura dry sacks for internal backpack organization.", specs: { Set: "5L, 10L, 15L", Weight: "108 g (Total)" } },
+      { id: "waistpack-trail-lumbar-5l", name: "Parc du Mont-Royal 5L Lumbar Trail Pack", category: "Backpacks", activity: "Trail Running", conditions: ["Mild", "Hot", "Dry"], weightGrams: 310, weightLabel: "310 g", price: 44.99, rating: 4.5, reviews: 41, desc: "Ergonomic lumbar pack with twin water bottle holsters for fast day hikes.", specs: { Volume: "5 Litres", Weight: "310 g" } },
+      { id: "pack-cover-waterproof-highvis", name: "Shield-Tech High-Visibility Rain Cover (50-70L)", category: "Backpacks", activity: "Backpacking", conditions: ["Rain / Wet", "Wind"], weightGrams: 115, weightLabel: "115 g", price: 24.99, rating: 4.6, reviews: 55, desc: "Seamless waterproof ripstop cover with reflective perimeter to shield large packs in storms.", specs: { Fit: "50 - 70 Litres", Weight: "115 g" } },
+      { id: "duffel-expedition-waterproof-70l", name: "Boreal 70L Rugged Waterproof Duffel", category: "Backpacks", activity: "Camping", conditions: ["Rain / Wet", "Snow / Ice"], weightGrams: 1450, weightLabel: "1.45 kg", price: 149.99, rating: 4.8, reviews: 36, desc: "Bombproof 840D TPU expedition duffel with stowable backpack shoulder straps.", specs: { Volume: "70 Litres", Material: "840D TPU" } },
+      { id: "organizer-packing-cube-ultralight", name: "Ultralight Compression Packing Cube Set (3-Pk)", category: "Backpacks", activity: "Camping", conditions: ["Mild", "Dry"], weightGrams: 130, weightLabel: "130 g", price: 29.99, rating: 4.7, reviews: 49, desc: "Dual-zipper compression cubes that compress apparel volume by up to 40%.", specs: { Set: "Small, Med, Large", Weight: "130 g" } },
+      { id: "jacket-saguenay-goretex-pro-shell", name: "Saguenay 3-Layer GORE-TEX Pro Shell Jacket", category: "Apparel", activity: "Mountaineering", conditions: ["Rain / Wet", "Wind", "Cold"], weightGrams: 435, weightLabel: "435 g", price: 399.99, rating: 4.9, reviews: 156, desc: "28,000mm waterproof alpine storm jacket with underarm pit zips and helmet hood.", specs: { Membrane: "3-Layer GORE-TEX Pro", Waterproofing: "28,000 mm", Weight: "435 g" } },
+      { id: "jacket-arctic-boreal-down-850", name: "Arctic Boreal 850-Fill Goose Down Parka", category: "Apparel", activity: "Mountaineering", conditions: ["Sub-Zero", "Snow / Ice", "Wind"], weightGrams: 590, weightLabel: "590 g", price: 349.99, rating: 4.9, reviews: 88, desc: "Sub-zero expedition down parka engineered for severe cold down to -25°C.", specs: { Insulation: "850-Fill Goose Down", Rating: "Down to -25°C", Weight: "590 g" } },
+      { id: "fleece-charlevoix-grid-midlayer", name: "Charlevoix Technical Grid-Fleece Hoody", category: "Apparel", activity: "Mountaineering", conditions: ["Cold", "Snow / Ice"], weightGrams: 315, weightLabel: "315 g", price: 119.99, rating: 4.8, reviews: 94, desc: "High-mobility breathable grid-fleece midlayer with scuba hood and thumb loops.", specs: { Material: "Polartec Power Grid", Weight: "315 g" } },
+      { id: "baselayer-merino-250-crew", name: "High-Altitude Merino 250 Thermal Crew Top", category: "Apparel", activity: "Mountaineering", conditions: ["Sub-Zero", "Cold"], weightGrams: 240, weightLabel: "240 g", price: 94.99, rating: 4.9, reviews: 130, desc: "100% natural 250g/m² heavyweight merino wool thermal top. Naturally odor-resistant.", specs: { Material: "100% Merino Wool (250g/m²)", Weight: "240 g" } },
+      { id: "baselayer-merino-250-bottom", name: "High-Altitude Merino 250 Thermal Leggings", category: "Apparel", activity: "Mountaineering", conditions: ["Sub-Zero", "Cold"], weightGrams: 210, weightLabel: "210 g", price: 89.99, rating: 4.8, reviews: 104, desc: "Heavyweight 250g/m² merino wool thermal long underwear for sub-zero active warmth.", specs: { Material: "100% Merino Wool (250g/m²)", Weight: "210 g" } },
+      { id: "pants-mont-albert-alpine-trek", name: "Mont-Albert Reinforced Alpine Trekking Pants", category: "Apparel", activity: "Mountaineering", conditions: ["Cold", "Wind", "Snow / Ice"], weightGrams: 460, weightLabel: "460 g", price: 139.99, rating: 4.7, reviews: 72, desc: "4-way stretch softshell pants reinforced with 500D Cordura knees and boot lace hooks.", specs: { Reinforcement: "500D Cordura", Weight: "460 g" } },
+      { id: "pants-storm-waterproof-rain-overpants", name: "Torrential GORE-TEX Paclite Rain Overpants", category: "Apparel", activity: "Backpacking", conditions: ["Rain / Wet", "Wind"], weightGrams: 270, weightLabel: "270 g", price: 159.99, rating: 4.8, reviews: 61, desc: "270g packable waterproof overpants with 3/4 side zippers for fast on/off over boots.", specs: { Membrane: "GORE-TEX Paclite", Weight: "270 g" } },
+      { id: "gloves-baffin-insulated-mountaineering", name: "Baffin Waterproof Insulated Mountaineering Gloves", category: "Apparel", activity: "Mountaineering", conditions: ["Sub-Zero", "Snow / Ice", "Wind"], weightGrams: 210, weightLabel: "210 g", price: 89.99, rating: 4.9, reviews: 85, desc: "Goat leather winter gloves insulated with 170g PrimaLoft Gold for alpine freezing conditions.", specs: { Insulation: "PrimaLoft Gold 170g", Material: "Goat Leather" } },
+      { id: "gloves-trail-light-windstopper", name: "WindBlock Touchscreen Trail Gloves", category: "Apparel", activity: "Trail Running", conditions: ["Mild", "Cold", "Wind"], weightGrams: 65, weightLabel: "65 g", price: 39.99, rating: 4.6, reviews: 52, desc: "Form-fitting softshell windproof gloves with conductive touchscreen fingertips.", specs: { Feature: "Touchscreen Compatible", Weight: "65 g" } },
+      { id: "beanie-nunavik-merino-wool", name: "Nunavik Double-Layer Merino Wool Beanie", category: "Apparel", activity: "Mountaineering", conditions: ["Sub-Zero", "Cold", "Wind"], weightGrams: 75, weightLabel: "75 g", price: 34.99, rating: 4.9, reviews: 140, desc: "100% fine merino rib-knit double-cuff toque for maximum ear warmth.", specs: { Material: "100% Fine Merino Wool", Weight: "75 g" } },
+      { id: "socks-merino-heavy-cushion-trek", name: "PeakTrek Heavy Cushion Merino Mountaineering Socks", category: "Apparel", activity: "Mountaineering", conditions: ["Sub-Zero", "Cold", "Snow / Ice"], weightGrams: 120, weightLabel: "120 g", price: 27.99, rating: 4.9, reviews: 175, desc: "High-density looped terry merino socks for blister-free comfort in stiff boots.", specs: { Cushion: "Heavy High-Density Terry", Material: "78% Merino Wool" } },
+      { id: "socks-merino-light-trail-runner", name: "PeakTrek Light Cushion Merino Running Socks (2-Pk)", category: "Apparel", activity: "Trail Running", conditions: ["Hot", "Mild", "Dry"], weightGrams: 60, weightLabel: "60 g", price: 19.99, rating: 4.7, reviews: 98, desc: "Fast-drying quarter-crew merino running socks with targeted impact cushioning.", specs: { Quantity: "2 Pairs", Weight: "60 g" } },
+      { id: "vest-windproof-ultralight-running", name: "Aerolite Ultralight Packable Wind Vest", category: "Apparel", activity: "Trail Running", conditions: ["Mild", "Wind"], weightGrams: 75, weightLabel: "75 g", price: 79.99, rating: 4.8, reviews: 43, desc: "75g featherweight wind-blocking core vest with laser-perforated back venting.", specs: { Weight: "75 g", Feature: "Laser-Perforated Venting" } },
+      { id: "neck-gaiter-merino-thermal", name: "Thermal Merino Wool Neck Gaiter / Buff", category: "Apparel", activity: "Mountaineering", conditions: ["Sub-Zero", "Cold", "Wind"], weightGrams: 45, weightLabel: "45 g", price: 24.99, rating: 4.9, reviews: 115, desc: "Seamless 200g/m² 100% merino wool neck tube for wind and snow protection.", specs: { Material: "100% Merino (200g/m²)", Weight: "45 g" } },
+      { id: "boots-appalachian-mid-waterproof", name: "Appalachian Waterproof Leather Mid Hiking Boots", category: "Footwear", activity: "Backpacking", conditions: ["Rain / Wet", "Cold", "Snow / Ice"], weightGrams: 1160, weightLabel: "1.16 kg", price: 219.99, rating: 4.9, reviews: 160, desc: "Nubuck leather waterproof backpacking boot featuring Vibram Megagrip lugged outsoles.", specs: { Upper: "2.0mm Nubuck Leather", Outsole: "Vibram Megagrip", Weight: "1.16 kg" } },
+      { id: "shoes-laurentian-speed-trail-runner", name: "Laurentian Speed Vigor Trail Running Shoes", category: "Footwear", activity: "Trail Running", conditions: ["Mild", "Hot", "Dry"], weightGrams: 580, weightLabel: "580 g", price: 149.99, rating: 4.8, reviews: 118, desc: "Aggressive 4.5mm lugged trail runner with protective rock plate and speed lacing.", specs: { Lugs: "4.5 mm Directional", Weight: "580 g (Pair)" } },
+      { id: "gaiters-alpine-waterproof-frontpoint", name: "Frontpoint Breathable Alpine Trail Gaiters", category: "Footwear", activity: "Mountaineering", conditions: ["Snow / Ice", "Rain / Wet", "Cold"], weightGrams: 230, weightLabel: "230 g", price: 49.99, rating: 4.8, reviews: 75, desc: "1000D Cordura lower gaiters to seal out snow, mud, and scree from hiking boots.", specs: { Lower: "1000D Ballistic Cordura", Weight: "230 g" } },
+      { id: "crampons-nordic-ice-traction-spikes", name: "Nordic Grip Steel Microspikes & Traction Cleats", category: "Footwear", activity: "Mountaineering", conditions: ["Sub-Zero", "Snow / Ice"], weightGrams: 360, weightLabel: "360 g", price: 64.99, rating: 4.9, reviews: 132, desc: "12 stainless steel spikes per foot on flexible rubber harness for icy winter trails.", specs: { Spikes: "12 Stainless Steel", Weight: "360 g" } },
+      { id: "poles-carbon-trekking-ultralight", name: "Carbon Aero Pro Folding Trekking Poles (Pair)", category: "Footwear", activity: "Backpacking", conditions: ["Mild", "Cold", "Snow / Ice"], weightGrams: 395, weightLabel: "395 g", price: 129.99, rating: 4.8, reviews: 106, desc: "395g folding 100% carbon fiber poles with natural cork sweat-wicking grips.", specs: { Shaft: "100% Carbon Fiber", Grip: "Natural Cork", Weight: "395 g" } },
+      { id: "shoes-camp-recovery-slide", name: "Basecamp Thermal Insulated Camp Booties", category: "Footwear", activity: "Camping", conditions: ["Cold", "Snow / Ice", "Dry"], weightGrams: 170, weightLabel: "170 g", price: 54.99, rating: 4.7, reviews: 48, desc: "Cozy insulated slip-on camp booties with non-slip silicone traction sole.", specs: { Insulation: "Synthetic Down", Weight: "170 g" } },
+      { id: "insoles-trail-orthotic-support", name: "TrailSupport Cushioning Ergonomic Insoles", category: "Footwear", activity: "Hiking", conditions: ["Mild", "Cold", "Hot"], weightGrams: 85, weightLabel: "85 g", price: 34.99, rating: 4.6, reviews: 67, desc: "Deep heel cup and carbon-composite arch support replacement insoles for trail footwear.", specs: { Support: "Semi-Rigid Arch", Weight: "85 g" } },
+      { id: "sandals-river-hybrid-water", name: "Rivière All-Terrain Amphibious Hiking Sandals", category: "Footwear", activity: "Paddling", conditions: ["Hot", "Mild", "Rain / Wet"], weightGrams: 680, weightLabel: "680 g", price: 89.99, rating: 4.7, reviews: 59, desc: "Quick-drying webbed amphibious sandals with rubber toe protection and wet-rock grip.", specs: { Sole: "HydroGrip Siped Rubber", Weight: "680 g" } },
+      { id: "boot-dryer-portable-travel", name: "Port-a-Dry Compact Boot & Glove Warmer", category: "Footwear", activity: "Mountaineering", conditions: ["Cold", "Snow / Ice", "Rain / Wet"], weightGrams: 240, weightLabel: "240 g", price: 39.99, rating: 4.5, reviews: 37, desc: "Dual USB/12V gentle thermal convection drying pods for soaked boots and gloves.", specs: { Power: "USB 5V / 12V Auto", Weight: "240 g" } },
+      { id: "laces-kevlar-reinforced-hiking", name: "Kevlar-Core Heavy Duty Boot Laces (Pair)", category: "Footwear", activity: "Hiking", conditions: ["Cold", "Rain / Wet", "Dry"], weightGrams: 30, weightLabel: "30 g", price: 12.99, rating: 4.8, reviews: 82, desc: "Unbreakable 100% Kevlar-reinforced replacement laces rated to 500 lbs tensile strength.", specs: { Strength: "500 lbs Tensile", Length: "180 cm" } },
+      { id: "stove-jacques-cartier-ultralight-isobutane", name: "Jacques-Cartier Ultralight Micro Isobutane Stove", category: "Camp Kitchen", activity: "Backpacking", conditions: ["Mild", "Hot", "Dry"], weightGrams: 73, weightLabel: "73 g", price: 44.99, rating: 4.8, reviews: 114, desc: "73g pocket-sized titanium screw-on backpacking stove with 10,000 BTU output.", specs: { Output: "10,000 BTU/hr", Weight: "73 g", Fuel: "Threaded Isobutane" } },
+      { id: "stove-boreal-windmaster-system", name: "Boreal Windmaster Integrated Fast-Boil Stove System", category: "Camp Kitchen", activity: "Mountaineering", conditions: ["Cold", "Wind", "Sub-Zero"], weightGrams: 370, weightLabel: "370 g", price: 119.99, rating: 4.9, reviews: 96, desc: "1L flux-ring pot stove system with piezo ignition that boils 500ml in 100 seconds.", specs: { Pot: "1.0L Hard-Anodized", BoilTime: "100s per 500ml", Weight: "370 g" } },
+      { id: "fuel-isobutane-canister-230g", name: "PureBurn 230g Isobutane/Propane Fuel Canister", category: "Camp Kitchen", activity: "Backpacking", conditions: ["Cold", "Sub-Zero", "Mild"], weightGrams: 380, weightLabel: "380 g", price: 7.99, rating: 4.9, reviews: 210, desc: "4-season 80/20 cold-weather gas blend with universal threaded Lindal valve.", specs: { Mix: "80% Isobutane / 20% Propane", Weight: "380 g Total" } },
+      { id: "fuel-isobutane-canister-100g", name: "PureBurn 100g Ultralight Isobutane Canister", category: "Camp Kitchen", activity: "Backpacking", conditions: ["Mild", "Hot", "Dry"], weightGrams: 195, weightLabel: "195 g", price: 5.99, rating: 4.8, reviews: 140, desc: "Compact 100g canister designed to nest inside 750ml titanium mugs and stove sets.", specs: { Weight: "195 g Total", Net: "100g Gas" } },
+      { id: "cookset-titanium-pot-pan-combo", name: "TitanTrek 1100ml Titanium Pot & Skillet Set", category: "Camp Kitchen", activity: "Backpacking", conditions: ["Mild", "Cold", "Hot"], weightGrams: 165, weightLabel: "165 g", price: 64.99, rating: 4.8, reviews: 88, desc: "165g pure titanium 1.1L pot with lid that doubles as a frying pan/bowl.", specs: { Material: "Pure Grade 1 Titanium", Weight: "165 g" } },
+      { id: "mug-double-wall-titanium-450ml", name: "TitanTrek 450ml Double-Wall Titanium Mug", category: "Camp Kitchen", activity: "Camping", conditions: ["Cold", "Sub-Zero", "Mild"], weightGrams: 120, weightLabel: "120 g", price: 34.99, rating: 4.7, reviews: 71, desc: "Vacuum-insulated titanium camp mug with folding handles; keeps drinks hot for 2 hours.", specs: { Volume: "450 ml", Insulation: "Double-Wall Vacuum", Weight: "120 g" } },
+      { id: "utensil-titanium-long-handle-spork", name: "Long-Reach Ultralight Titanium Trail Spork", category: "Camp Kitchen", activity: "Backpacking", conditions: ["Mild", "Hot", "Cold"], weightGrams: 19, weightLabel: "19 g", price: 14.99, rating: 4.9, reviews: 180, desc: "19g 21.5cm long handle titanium spork designed to reach deep into meal pouches.", specs: { Length: "21.5 cm", Weight: "19 g" } },
+      { id: "filter-rapids-squeeze-water", name: "Rapids Gravity & Squeeze Micro Water Filter", category: "Camp Kitchen", activity: "Backpacking", conditions: ["Mild", "Hot", "Rain / Wet"], weightGrams: 65, weightLabel: "65 g", price: 42.99, rating: 4.9, reviews: 165, desc: "65g 0.1-micron hollow-fiber filter removing 99.99999% of bacteria and protozoa.", specs: { PoreSize: "0.1 Micron", Life: "100,000 Litres", Weight: "65 g" } },
+      { id: "bottle-insulated-stainless-1l", name: "GlacierShield 1L Vacuum Insulated Steel Bottle", category: "Camp Kitchen", activity: "Hiking", conditions: ["Hot", "Cold", "Sub-Zero"], weightGrams: 420, weightLabel: "420 g", price: 36.99, rating: 4.8, reviews: 125, desc: "18/8 stainless steel bottle keeping liquids cold 24h or hot 12h; wide mouth fits filters.", specs: { Volume: "1.0 Litre", Material: "18/8 Pro Stainless", Weight: "420 g" } },
+      { id: "reservoir-hydrapack-3l-bladder", name: "HydraFlow 3L Leak-Proof Hydration Reservoir", category: "Camp Kitchen", activity: "Backpacking", conditions: ["Hot", "Mild", "Dry"], weightGrams: 160, weightLabel: "160 g", price: 38.99, rating: 4.7, reviews: 89, desc: "Wide slide-seal 3L bladder with insulated quick-disconnect drinking hose.", specs: { Volume: "3 Litres", Valve: "High-Flow Surge", Weight: "160 g" } },
+      { id: "meal-freeze-dried-montreal-shepherds-pie", name: "Backcountry Freeze-Dried Pâté Chinois (2-Serv)", category: "Camp Kitchen", activity: "Backpacking", conditions: ["Cold", "Sub-Zero", "Mild"], weightGrams: 180, weightLabel: "180 g", price: 13.99, rating: 4.9, reviews: 195, desc: "Quebec Shepherd's Pie with beef, corn, and mashed potatoes (650 kcal, 36g protein).", specs: { Calories: "650 kcal", Protein: "36 g", Servings: "2" } },
+      { id: "meal-freeze-dried-wild-berry-oatmeal", name: "Backcountry Wild Blueberry & Maple Oats (2-Serv)", category: "Camp Kitchen", activity: "Backpacking", conditions: ["Mild", "Cold", "Hot"], weightGrams: 140, weightLabel: "140 g", price: 9.99, rating: 4.8, reviews: 110, desc: "Organic rolled oats with maple sugar flakes, chia, and wild blueberries (520 kcal).", specs: { Calories: "520 kcal", Servings: "2", Organic: "Yes" } },
+      { id: "headlamp-aurora-borealis-500lm", name: "Aurora Borealis 500-Lumen Rechargeable Headlamp", category: "Lighting", activity: "Backpacking", conditions: ["Rain / Wet", "Cold", "Wind"], weightGrams: 78, weightLabel: "78 g", price: 59.99, rating: 4.9, reviews: 142, desc: "78g IPX8 waterproof 500lm hybrid headlamp with red night-vision mode and USB-C.", specs: { Lumens: "500 lm", Beam: "85 meters", Waterproof: "IPX8", Weight: "78 g" } },
+      { id: "lantern-sol-camping-collapsible", name: "SolGlow Solar & USB Collapsible Tent Lantern", category: "Lighting", activity: "Camping", conditions: ["Hot", "Mild", "Dry"], weightGrams: 165, weightLabel: "165 g", price: 29.99, rating: 4.7, reviews: 68, desc: "Soft silicone 300-lumen lantern that collapses flat; charges via solar panel or USB.", specs: { Lumens: "300 lm", Battery: "2000 mAh", Weight: "165 g" } },
+      { id: "powerbank-solar-rugged-20000mah", name: "Rugged Outback 20,000mAh Solar Power Bank", category: "Lighting", activity: "Backpacking", conditions: ["Rain / Wet", "Cold", "Wind"], weightGrams: 440, weightLabel: "440 g", price: 69.99, rating: 4.8, reviews: 92, desc: "Drop-proof IP67 power bank with 20W USB-C fast charging and emergency flashlight.", specs: { Capacity: "20,000 mAh", FastCharge: "20W PD USB-C", IP: "IP67" } },
+      { id: "charger-foldable-solar-panel-28w", name: "HelioTrack 28W Foldable Solar Charger", category: "Lighting", activity: "Backpacking", conditions: ["Hot", "Mild", "Dry"], weightGrams: 610, weightLabel: "610 g", price: 89.99, rating: 4.6, reviews: 45, desc: "4-panel 24% high-efficiency solar array with dual USB ports for off-grid trekking.", specs: { Power: "28 Watts", Efficiency: "24%", Weight: "610 g" } },
+      { id: "compass-sight-mirror-orienteering", name: "GeoNorth Precision Sighting Mirror Compass", category: "Lighting", activity: "Mountaineering", conditions: ["Cold", "Snow / Ice"], weightGrams: 85, weightLabel: "85 g", price: 49.99, rating: 4.9, reviews: 78, desc: "Sighting compass with declination adjustment and clinometer for slope angle reading.", specs: { Feature: "Clinometer + Declination Adj", Weight: "85 g" } },
+      { id: "gps-satellite-messenger-communicator", name: "NorthStar Mini 2-Way Satellite Communicator", category: "Lighting", activity: "Mountaineering", conditions: ["Sub-Zero", "Cold"], weightGrams: 100, weightLabel: "100 g", price: 349.99, rating: 4.9, reviews: 110, desc: "100g global Iridium satellite text messenger with interactive 24/7 SOS dispatch.", specs: { Network: "100% Global Iridium", SOS: "Interactive 24/7", Weight: "100 g" } },
+      { id: "warmer-rechargeable-hand-electronic", name: "ThermGrip 5200mAh Dual-Sided USB Hand Warmer", category: "Lighting", activity: "Mountaineering", conditions: ["Sub-Zero", "Cold", "Wind"], weightGrams: 135, weightLabel: "135 g", price: 32.99, rating: 4.8, reviews: 88, desc: "Electronic aluminum hand warmer heating up in 3s with 3 temperature presets.", specs: { Heat: "Up to 55°C (131°F)", Battery: "5200 mAh", Weight: "135 g" } },
+      { id: "case-waterproof-floating-phone-map", name: "AquaGuard Touch-Through Waterproof Floating Case", category: "Lighting", activity: "Paddling", conditions: ["Rain / Wet", "Hot", "Mild"], weightGrams: 48, weightLabel: "48 g", price: 19.99, rating: 4.6, reviews: 54, desc: "IPX8 certified submersible phone pouch with air cushion perimeter that floats.", specs: { IP: "IPX8 (30m)", Feature: "Floats with Phone", Weight: "48 g" } },
+      { id: "light-clip-pack-beacon-red", name: "NightTrail Ultralight Multi-Mode Safety Strobe", category: "Lighting", activity: "Trail Running", conditions: ["Rain / Wet", "Cold"], weightGrams: 20, weightLabel: "20 g", price: 16.99, rating: 4.7, reviews: 62, desc: "20g clip-on high-intensity LED strobe visible over 1km away in fog and darkness.", specs: { Visibility: "1.2 km", Weight: "20 g", Battery: "Rechargeable" } },
+      { id: "firstaid-wilderness-trauma-responder", name: "Mountain Medic Wilderness First Aid Kit", category: "Safety", activity: "Backpacking", conditions: ["Cold", "Rain / Wet", "Hot"], weightGrams: 430, weightLabel: "430 g", price: 54.99, rating: 4.9, reviews: 140, desc: "Comprehensive 1-4 person medical kit with tourniquet, splint, and blister supplies.", specs: { GroupSize: "1-4 Persons", Case: "Water-Resistant Ripstop", Weight: "430 g" } },
+      { id: "safety-bear-deterrent-spray-holster", name: "Kodiak Defense Bear Deterrent Spray with Holster", category: "Safety", activity: "Backpacking", conditions: ["Mild", "Cold", "Hot"], weightGrams: 310, weightLabel: "310 g", price: 49.99, rating: 4.9, reviews: 165, desc: "Maximum strength 1.0% Capsaicin bear spray with 10.5m spray range and holster.", specs: { Range: "10.5 meters (35 ft)", Formula: "1.0% Major Capsaicinoids" } },
+      { id: "multitool-outfitter-titanium-14in1", name: "Outfitter Pro 14-in-1 Titanium Pocket Multi-Tool", category: "Safety", activity: "Backpacking", conditions: ["Cold", "Rain / Wet", "Dry"], weightGrams: 198, weightLabel: "198 g", price: 74.99, rating: 4.8, reviews: 92, desc: "198g multi-tool with one-handed opening pliers, knife, saw, scissors, and bit driver.", specs: { Tools: "14 Functional Tools", Steel: "440C + Titanium Handles", Weight: "198 g" } },
+      { id: "repair-tenacious-gear-patch-tape", name: "Tenacious Grip Waterproof Gear Repair Tape", category: "Safety", activity: "Backpacking", conditions: ["Rain / Wet", "Cold", "Sub-Zero"], weightGrams: 40, weightLabel: "40 g", price: 12.99, rating: 4.9, reviews: 190, desc: "Permanent transparent adhesive tape for field repairs on tents, jackets, and pads.", specs: { Length: "50 cm Roll", Waterproof: "Yes", Weight: "40 g" } },
+      { id: "care-nikwax-tx-direct-wash-duopack", name: "Nikwax Tech Wash & TX.Direct Waterproofing Duo", category: "Safety", activity: "Mountaineering", conditions: ["Rain / Wet", "Snow / Ice"], weightGrams: 700, weightLabel: "700 g", price: 26.99, rating: 4.8, reviews: 130, desc: "Technical wash and wash-in waterproofing to restore DWR on Gore-Tex outerwear.", specs: { Size: "2x 300 ml Bottles", Use: "Restores Breathable DWR" } },
+      { id: "blanket-emergency-thermal-mylar-2pk", name: "ReflectaTherm Heavy-Duty Space Blanket (2-Pack)", category: "Safety", activity: "Backpacking", conditions: ["Sub-Zero", "Cold", "Wind"], weightGrams: 80, weightLabel: "80 g", price: 11.99, rating: 4.7, reviews: 75, desc: "80g tear-resistant vacuum-metallized blanket reflecting 90% body heat in emergencies.", specs: { HeatReflect: "90% Body Heat", Pack: "2 Blankets", Weight: "80 g" } },
+      { id: "whistle-firestarter-emergency-combo", name: "Alpine Signal 120dB Whistle with Ferro Rod", category: "Safety", activity: "Backpacking", conditions: ["Rain / Wet", "Cold", "Wind"], weightGrams: 38, weightLabel: "38 g", price: 14.99, rating: 4.8, reviews: 88, desc: "38g pealess 120dB distress storm whistle paired with a 3,000°C spark ferrocerium rod.", specs: { Sound: "120 dB Pealess", Spark: "3,000°C Ferro Rod", Weight: "38 g" } },
+      { id: "saw-pocket-chainsaw-carbon-steel", name: "TimberCut High-Carbon Flexible Pocket Chain Saw", category: "Safety", activity: "Camping", conditions: ["Cold", "Mild", "Dry"], weightGrams: 145, weightLabel: "145 g", price: 24.99, rating: 4.6, reviews: 54, desc: "145g flexible high-carbon steel chain saw with 33 bi-directional teeth for firewood.", specs: { Teeth: "33 Bi-Directional Carbon Steel", Length: "65 cm Chain", Weight: "145 g" } }
+    ];
+
+    class StoreApp {
+      constructor() {
+        this.cart = [
+          { id: "sleepbag-taiga-down-minus10", qty: 1 },
+          { id: "pad-laurentian-thermal-insulated", qty: 1 }
+        ];
+        this.browsingHistory = ["tent-mont-tremblant-3p", "sleepbag-taiga-down-minus10", "pad-laurentian-thermal-insulated"];
+        this.currentCategory = "Tents";
+        this.currentPDPProduct = CATALOG[0];
+        
+        // Multi-Select Facet States
+        this.selectedCategories = new Set();
+        this.selectedActivities = new Set();
+        this.selectedConditions = new Set();
+        this.selectedWeights = new Set();
+        this.selectedPrices = new Set();
+        this.selectedRatings = new Set();
+        this.searchQuery = "";
+
+        this.init();
+      }
+
+      init() {
+        this.renderHomeFeatured();
+        this.renderFacets();
+        this.renderSearchGrid();
+        this.renderCart();
+        this.logPromptAPITrace("Initial Store Session Loaded");
+      }
+
+      // Dynamic Native Developer Console Logging
+      logPromptAPITrace(reason) {
+        console.groupCollapsed(`%c[Prompt API: Session Trace] %c${reason}`, "color: #1b3b2b; font-weight: bold; background: #ede8dc; padding: 2px 6px; border-radius: 3px;", "color: #b5471e; font-weight: bold;");
+        console.log("%cActive Browsing History:", "font-weight: bold; color: #1b3b2b;", this.browsingHistory);
+        console.log("%cCart Contents (3.0x Weight Multiplier):", "font-weight: bold; color: #b5471e;", this.cart);
+        console.log("%cActive Conditions Vector:", "font-weight: bold;", Array.from(this.selectedConditions));
+        
+        // Inferred archetype simulation
+        let inferredArchetype = "3-Season General Backcountry";
+        if (Array.from(this.selectedConditions).includes("Sub-Zero") || this.cart.some(i => i.id.includes("taiga") || i.id.includes("minus10"))) {
+          inferredArchetype = "Sub-Zero Alpine Mountaineering & Severe Cold Traverse";
+        } else if (this.selectedActivities.has("Paddling") || this.cart.some(i => i.id.includes("drybag") || i.id.includes("sandals"))) {
+          inferredArchetype = "High-Humidity Canoe Tripping & Portaging";
+        } else if (this.selectedActivities.has("Trail Running") || this.browsingHistory.some(id => id.includes("running") || id.includes("vest"))) {
+          inferredArchetype = "Ultralight Fastpacking & High-Tempo Trail";
+        }
+        
+        console.log(`%cInferred Archetype:%c "${inferredArchetype}"`, "font-weight: bold;", "color: #2c5942; font-weight: bold;");
+        console.log("%cStructured Recommendation Rationale:", "font-weight: bold;");
+        console.table([
+          { RecommendedID: "pad-laurentian-thermal-insulated", Synergy: "Thermal R-4.8 ground insulation complements -10°C bag", WeightDecay: 0.85, CartMultiplier: 3.0 },
+          { RecommendedID: "warmer-rechargeable-hand-electronic", Synergy: "Rapid auxiliary hand warmth for freezing conditions", WeightDecay: 0.85, CartMultiplier: 3.0 },
+          { RecommendedID: "beanie-nunavik-merino-wool", Synergy: "Merino cranial heat retention during overnight camp", WeightDecay: 0.85, CartMultiplier: 3.0 }
+        ]);
+        console.groupEnd();
+      }
+
+      // Page Navigation
+      switchView(viewId) {
+        document.querySelectorAll('.page-view').forEach(el => el.classList.remove('active'));
+        document.getElementById(viewId).classList.add('active');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      showHome() {
+        this.switchView('home-view');
+        this.logPromptAPITrace("Navigated to Home Landing Page");
+      }
+
+      // Standalone Category Page
+      showCategory(categoryName) {
+        this.currentCategory = categoryName;
+        document.getElementById('cat-page-title').textContent = categoryName;
+        
+        const items = CATALOG.filter(p => p.category === categoryName);
+        document.getElementById('cat-page-count').textContent = `${items.length} items`;
+        
+        const grid = document.getElementById('category-grid');
+        grid.innerHTML = items.map(p => this.renderProductCard(p)).join('');
+
+        this.switchView('category-view');
+        this.logPromptAPITrace(`Navigated to Standalone Category Page: ${categoryName}`);
+      }
+
+      // Standalone Search & Faceted Search Page
+      showSearch(query = '') {
+        this.searchQuery = query;
+        document.getElementById('header-search-input').value = query;
+        
+        if (query && CATALOG.some(p => p.category.toLowerCase() === query.toLowerCase())) {
+          const matchedCat = CATALOG.find(p => p.category.toLowerCase() === query.toLowerCase()).category;
+          this.selectedCategories.clear();
+          this.selectedCategories.add(matchedCat);
+        }
+
+        document.getElementById('search-heading').textContent = query ? `Search: "${query}"` : 'All Gear';
+        this.renderFacets();
+        this.renderSearchGrid();
+        this.switchView('search-view');
+        this.logPromptAPITrace(`Navigated to Search Page: query="${query}"`);
+      }
+
+      // Standalone Product Detail Page
+      showPDP(productId) {
+        const product = CATALOG.find(p => p.id === productId) || CATALOG[0];
+        this.currentPDPProduct = product;
+        
+        if (!this.browsingHistory.includes(product.id)) {
+          this.browsingHistory.push(product.id);
+        }
+
+        // Real Hierarchical Breadcrumbs: Home / Category / Product Name
+        const crumbs = document.getElementById('pdp-breadcrumbs');
+        crumbs.innerHTML = `
+          <a onclick="app.showHome()">Home</a> / 
+          <a onclick="app.showCategory('${product.category}')">${product.category}</a> / 
+          <span>${product.name}</span>
+        `;
+
+        document.getElementById('pdp-name').textContent = product.name;
+        document.getElementById('pdp-price').textContent = `$${product.price.toFixed(2)}`;
+        document.getElementById('pdp-rating').textContent = `★★★★★ (${product.reviews} reviews)`;
+        document.getElementById('pdp-desc').textContent = product.desc;
+
+        // Specs table
+        const specsTable = document.getElementById('pdp-specs-table');
+        let specsHtml = '';
+        for (const [key, val] of Object.entries(product.specs)) {
+          specsHtml += `<tr><th>${key}</th><td>${val}</td></tr>`;
+        }
+        specsHtml += `<tr><th>Category</th><td>${product.category}</td></tr>`;
+        specsHtml += `<tr><th>Primary Activity</th><td>${product.activity}</td></tr>`;
+        specsHtml += `<tr><th>Conditions</th><td>${product.conditions.join(', ')}</td></tr>`;
+        specsTable.innerHTML = specsHtml;
+
+        // PDP Recommendations ("For You")
+        this.renderPDPRecs(product);
+
+        this.switchView('pdp-view');
+        this.logPromptAPITrace(`Viewing PDP: ${product.name}`);
+      }
+
+      renderPDPRecs(currentProduct) {
+        const recs = CATALOG.filter(p => p.id !== currentProduct.id && p.category !== currentProduct.category)
+          .slice(0, 4);
+
+        const container = document.getElementById('pdp-recs-grid');
+        container.innerHTML = recs.map(item => `
+          <div class="product-card" onclick="app.showPDP('${item.id}')">
+            <div class="card-photo" style="height: 130px;">
+              <span class="photo-category">${item.category}</span>
+              <svg viewBox="0 0 24 24" style="width: 40px; height: 40px;"><path d="M12 2C8 2 5 6 5 11v9c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2v-9c0-5-3-9-7-9z"/></svg>
+              <span class="photo-weight">${item.weightLabel}</span>
+            </div>
+            <div class="card-content" style="padding: 12px;">
+              <div class="card-name" style="font-size: 13px;">${item.name}</div>
+              <div class="card-footer" style="padding-top: 8px;">
+                <span class="card-price" style="font-size: 14px;">$${item.price.toFixed(2)}</span>
+                <button class="quick-add-btn" onclick="event.stopPropagation(); app.addToCart('${item.id}')">+ Add to Cart</button>
+              </div>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      renderHomeFeatured() {
+        const featured = [
+          CATALOG.find(p => p.id === "tent-mont-tremblant-3p"),
+          CATALOG.find(p => p.id === "sleepbag-taiga-down-minus10"),
+          CATALOG.find(p => p.id === "jacket-saguenay-goretex-pro-shell"),
+          CATALOG.find(p => p.id === "boots-appalachian-mid-waterproof")
+        ].filter(Boolean);
+
+        document.getElementById('home-featured-grid').innerHTML = featured.map(p => this.renderProductCard(p)).join('');
+      }
+
+      renderProductCard(p) {
+        return `
+          <article class="product-card" onclick="app.showPDP('${p.id}')">
+            <div class="card-photo">
+              <span class="photo-category">${p.category}</span>
+              <svg viewBox="0 0 24 24"><path d="M12 2C8 2 5 6 5 11v9c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2v-9c0-5-3-9-7-9z"/></svg>
+              <span class="photo-weight">${p.weightLabel}</span>
+            </div>
+            <div class="card-content">
+              <div class="card-conds">
+                ${p.conditions.map(c => `<span class="card-cond-tag">${c}</span>`).join('')}
+              </div>
+              <h2 class="card-name">${p.name}</h2>
+              <p class="card-desc">${p.desc}</p>
+              <div class="card-footer">
+                <span class="card-price">$${p.price.toFixed(2)}</span>
+                <button class="quick-add-btn" onclick="event.stopPropagation(); app.addToCart('${p.id}')">+ Add to Cart</button>
+              </div>
+            </div>
+          </article>
+        `;
+      }
+
+      // Adventure Search Handler
+      handleAdventureSearch() {
+        const input = document.getElementById('home-adventure-input');
+        const text = input.value.trim();
+        if (!text) return;
+        this.selectedConditions.add("Sub-Zero");
+        this.selectedConditions.add("Snow / Ice");
+        this.showSearch(text);
+        this.logPromptAPITrace(`Synthesized Adventure Query: "${text}"`);
+      }
+
+      fillAdventurePrompt(val) {
+        document.getElementById('home-adventure-input').value = val;
+        this.handleAdventureSearch();
+      }
+
+      // MULTI-SELECT FACET FILTER TOGGLE METHODS
+      toggleCategoryFacet(cat) {
+        if (this.selectedCategories.has(cat)) {
+          this.selectedCategories.delete(cat);
+        } else {
+          this.selectedCategories.add(cat);
+        }
+        this.renderFacets();
+        this.renderSearchGrid();
+        this.logPromptAPITrace(`Toggled Category Facet: ${cat}`);
+      }
+
+      toggleActivityFacet(act) {
+        if (this.selectedActivities.has(act)) {
+          this.selectedActivities.delete(act);
+        } else {
+          this.selectedActivities.add(act);
+        }
+        this.renderFacets();
+        this.renderSearchGrid();
+        this.logPromptAPITrace(`Toggled Activity Facet: ${act}`);
+      }
+
+      toggleConditionFacet(cond) {
+        if (this.selectedConditions.has(cond)) {
+          this.selectedConditions.delete(cond);
+        } else {
+          this.selectedConditions.add(cond);
+        }
+        this.renderFacets();
+        this.renderSearchGrid();
+        this.logPromptAPITrace(`Toggled Condition Facet: ${cond}`);
+      }
+
+      toggleWeightFacet(w) {
+        if (this.selectedWeights.has(w)) {
+          this.selectedWeights.delete(w);
+        } else {
+          this.selectedWeights.add(w);
+        }
+        this.renderFacets();
+        this.renderSearchGrid();
+        this.logPromptAPITrace(`Toggled Weight Facet: ${w}`);
+      }
+
+      togglePriceFacet(p) {
+        if (this.selectedPrices.has(p)) {
+          this.selectedPrices.delete(p);
+        } else {
+          this.selectedPrices.add(p);
+        }
+        this.renderFacets();
+        this.renderSearchGrid();
+        this.logPromptAPITrace(`Toggled Price Facet: ${p}`);
+      }
+
+      toggleRatingFacet(r) {
+        if (this.selectedRatings.has(r)) {
+          this.selectedRatings.delete(r);
+        } else {
+          this.selectedRatings.add(r);
+        }
+        this.renderFacets();
+        this.renderSearchGrid();
+        this.logPromptAPITrace(`Toggled Rating Facet: ${r}`);
+      }
+
+      resetFilters() {
+        this.selectedCategories.clear();
+        this.selectedActivities.clear();
+        this.selectedConditions.clear();
+        this.selectedWeights.clear();
+        this.selectedPrices.clear();
+        this.selectedRatings.clear();
+        this.searchQuery = "";
+        document.getElementById('header-search-input').value = "";
+        document.getElementById('search-heading').textContent = 'All Gear';
+        this.renderFacets();
+        this.renderSearchGrid();
+        this.logPromptAPITrace("Reset All Filters on Search Page");
+      }
+
+      // Calculate Dynamic Facet Option Count (Items available matching other active filters + this option)
+      getDynamicFacetCount(facetGroup, value) {
+        return CATALOG.filter(p => {
+          // Category check
+          if (facetGroup === 'category') {
+            if (p.category !== value) return false;
+          } else if (this.selectedCategories.size > 0 && !this.selectedCategories.has(p.category)) {
+            return false;
+          }
+
+          // Activity check
+          if (facetGroup === 'activity') {
+            if (p.activity !== value) return false;
+          } else if (this.selectedActivities.size > 0 && !this.selectedActivities.has(p.activity)) {
+            return false;
+          }
+
+          // Conditions check
+          if (facetGroup === 'condition') {
+            if (!p.conditions.includes(value)) return false;
+          } else if (this.selectedConditions.size > 0) {
+            const hasCond = p.conditions.some(c => this.selectedConditions.has(c));
+            if (!hasCond) return false;
+          }
+
+          // Weight check
+          if (facetGroup === 'weight') {
+            if (value === "<500" && p.weightGrams >= 500) return false;
+            if (value === "500-1000" && (p.weightGrams < 500 || p.weightGrams > 1000)) return false;
+            if (value === "1000-2000" && (p.weightGrams <= 1000 || p.weightGrams > 2000)) return false;
+            if (value === ">2000" && p.weightGrams <= 2000) return false;
+          } else if (this.selectedWeights.size > 0) {
+            const matchesWeight = Array.from(this.selectedWeights).some(w => {
+              if (w === "<500") return p.weightGrams < 500;
+              if (w === "500-1000") return p.weightGrams >= 500 && p.weightGrams <= 1000;
+              if (w === "1000-2000") return p.weightGrams > 1000 && p.weightGrams <= 2000;
+              if (w === ">2000") return p.weightGrams > 2000;
+              return false;
+            });
+            if (!matchesWeight) return false;
+          }
+
+          // Price check
+          if (facetGroup === 'price') {
+            if (value === "<50" && p.price >= 50) return false;
+            if (value === "50-100" && (p.price < 50 || p.price > 100)) return false;
+            if (value === "100-250" && (p.price <= 100 || p.price > 250)) return false;
+            if (value === ">250" && p.price <= 250) return false;
+          } else if (this.selectedPrices.size > 0) {
+            const matchesPrice = Array.from(this.selectedPrices).some(pr => {
+              if (pr === "<50") return p.price < 50;
+              if (pr === "50-100") return p.price >= 50 && p.price <= 100;
+              if (pr === "100-250") return p.price > 100 && p.price <= 250;
+              if (pr === ">250") return p.price > 250;
+              return false;
+            });
+            if (!matchesPrice) return false;
+          }
+
+          // Rating check
+          if (facetGroup === 'rating') {
+            if (p.rating < value) return false;
+          } else if (this.selectedRatings.size > 0) {
+            const matchesRating = Array.from(this.selectedRatings).some(r => p.rating >= r);
+            if (!matchesRating) return false;
+          }
+
+          // Search Query
+          if (this.searchQuery) {
+            const q = this.searchQuery.toLowerCase();
+            const matchName = p.name.toLowerCase().includes(q);
+            const matchDesc = p.desc.toLowerCase().includes(q);
+            const matchCat = p.category.toLowerCase().includes(q);
+            const matchAct = p.activity.toLowerCase().includes(q);
+            const matchCond = p.conditions.some(c => c.toLowerCase().includes(q));
+            if (!matchName && !matchDesc && !matchCat && !matchAct && !matchCond) return false;
+          }
+
+          return true;
+        }).length;
+      }
+
+      getFilteredSearchResults() {
+        return CATALOG.filter(p => {
+          // Multi-select Category
+          if (this.selectedCategories.size > 0 && !this.selectedCategories.has(p.category)) {
+            return false;
+          }
+
+          // Multi-select Activity
+          if (this.selectedActivities.size > 0 && !this.selectedActivities.has(p.activity)) {
+            return false;
+          }
+
+          // Multi-select Conditions
+          if (this.selectedConditions.size > 0) {
+            const hasCond = p.conditions.some(c => this.selectedConditions.has(c));
+            if (!hasCond) return false;
+          }
+
+          // Multi-select Weight Ranges
+          if (this.selectedWeights.size > 0) {
+            const matchesWeight = Array.from(this.selectedWeights).some(w => {
+              if (w === "<500") return p.weightGrams < 500;
+              if (w === "500-1000") return p.weightGrams >= 500 && p.weightGrams <= 1000;
+              if (w === "1000-2000") return p.weightGrams > 1000 && p.weightGrams <= 2000;
+              if (w === ">2000") return p.weightGrams > 2000;
+              return false;
+            });
+            if (!matchesWeight) return false;
+          }
+
+          // Multi-select Price Ranges
+          if (this.selectedPrices.size > 0) {
+            const matchesPrice = Array.from(this.selectedPrices).some(pr => {
+              if (pr === "<50") return p.price < 50;
+              if (pr === "50-100") return p.price >= 50 && p.price <= 100;
+              if (pr === "100-250") return p.price > 100 && p.price <= 250;
+              if (pr === ">250") return p.price > 250;
+              return false;
+            });
+            if (!matchesPrice) return false;
+          }
+
+          // Multi-select Rating Thresholds
+          if (this.selectedRatings.size > 0) {
+            const matchesRating = Array.from(this.selectedRatings).some(r => p.rating >= r);
+            if (!matchesRating) return false;
+          }
+
+          // Search Query
+          if (this.searchQuery) {
+            const q = this.searchQuery.toLowerCase();
+            const matchName = p.name.toLowerCase().includes(q);
+            const matchDesc = p.desc.toLowerCase().includes(q);
+            const matchCat = p.category.toLowerCase().includes(q);
+            const matchAct = p.activity.toLowerCase().includes(q);
+            const matchCond = p.conditions.some(c => c.toLowerCase().includes(q));
+            if (!matchName && !matchDesc && !matchCat && !matchAct && !matchCond) return false;
+          }
+
+          return true;
+        });
+      }
+
+      renderFacets() {
+        const categories = ["Tents", "Sleeping Bags", "Backpacks", "Apparel", "Footwear", "Camp Kitchen", "Lighting", "Safety"];
+        const activities = ["Hiking", "Backpacking", "Camping", "Trail Running", "Mountaineering", "Paddling"];
+        const conditions = ["Sub-Zero", "Cold", "Mild", "Hot", "Rain / Wet", "Snow / Ice", "Wind", "Dry"];
+        const weights = [
+          { id: "<500", label: "< 500 g" },
+          { id: "500-1000", label: "500 g – 1 kg" },
+          { id: "1000-2000", label: "1 kg – 2 kg" },
+          { id: ">2000", label: "> 2 kg" }
+        ];
+        const prices = [
+          { id: "<50", label: "< $50" },
+          { id: "50-100", label: "$50 – $100" },
+          { id: "100-250", label: "$100 – $250" },
+          { id: ">250", label: "$250+" }
+        ];
+        const ratings = [
+          { val: 3.0, label: "3+ ★" },
+          { val: 4.0, label: "4+ ★" },
+          { val: 4.8, label: "5 ★" }
+        ];
+
+        // Categories (Dynamic Counts)
+        document.getElementById('category-facets').innerHTML = categories.map(cat => {
+          const count = this.getDynamicFacetCount('category', cat);
+          const checked = this.selectedCategories.has(cat);
+          const disabled = count === 0 && !checked;
+          return `<div class="facet-row ${disabled ? 'disabled' : ''}" onclick="${disabled ? '' : `app.toggleCategoryFacet('${cat}')`}"><span class="facet-check"><span class="custom-check ${checked ? 'checked' : ''}">${checked ? '✓' : ''}</span> ${cat}</span><span class="facet-count">(${count})</span></div>`;
+        }).join('');
+
+        // Activities (Dynamic Counts)
+        document.getElementById('activity-facets').innerHTML = activities.map(act => {
+          const count = this.getDynamicFacetCount('activity', act);
+          const checked = this.selectedActivities.has(act);
+          const disabled = count === 0 && !checked;
+          return `<div class="facet-row ${disabled ? 'disabled' : ''}" onclick="${disabled ? '' : `app.toggleActivityFacet('${act}')`}"><span class="facet-check"><span class="custom-check ${checked ? 'checked' : ''}">${checked ? '✓' : ''}</span> ${act}</span><span class="facet-count">(${count})</span></div>`;
+        }).join('');
+
+        // Conditions (Dynamic Counts)
+        document.getElementById('condition-facets').innerHTML = conditions.map(cond => {
+          const count = this.getDynamicFacetCount('condition', cond);
+          const active = this.selectedConditions.has(cond);
+          const disabled = count === 0 && !active;
+          return `<button class="cond-btn ${active ? 'active' : ''} ${disabled ? 'disabled' : ''}" onclick="${disabled ? '' : `app.toggleConditionFacet('${cond}')`}">${cond} <span class="cond-count">(${count})</span></button>`;
+        }).join('');
+
+        // Weights (Dynamic Counts)
+        document.getElementById('weight-facets').innerHTML = weights.map(w => {
+          const count = this.getDynamicFacetCount('weight', w.id);
+          const checked = this.selectedWeights.has(w.id);
+          const disabled = count === 0 && !checked;
+          return `<div class="facet-row ${disabled ? 'disabled' : ''}" onclick="${disabled ? '' : `app.toggleWeightFacet('${w.id}')`}"><span class="facet-check"><span class="custom-check ${checked ? 'checked' : ''}">${checked ? '✓' : ''}</span> ${w.label}</span><span class="facet-count">(${count})</span></div>`;
+        }).join('');
+
+        // Prices (Dynamic Counts)
+        document.getElementById('price-facets').innerHTML = prices.map(pr => {
+          const count = this.getDynamicFacetCount('price', pr.id);
+          const checked = this.selectedPrices.has(pr.id);
+          const disabled = count === 0 && !checked;
+          return `<div class="facet-row ${disabled ? 'disabled' : ''}" onclick="${disabled ? '' : `app.togglePriceFacet('${pr.id}')`}"><span class="facet-check"><span class="custom-check ${checked ? 'checked' : ''}">${checked ? '✓' : ''}</span> ${pr.label}</span><span class="facet-count">(${count})</span></div>`;
+        }).join('');
+
+        // Ratings (Dynamic Counts)
+        document.getElementById('rating-facets').innerHTML = ratings.map(r => {
+          const count = this.getDynamicFacetCount('rating', r.val);
+          const checked = this.selectedRatings.has(r.val);
+          const disabled = count === 0 && !checked;
+          return `<div class="facet-row ${disabled ? 'disabled' : ''}" onclick="${disabled ? '' : `app.toggleRatingFacet(${r.val})`}"><span class="facet-check"><span class="custom-check ${checked ? 'checked' : ''}">${checked ? '✓' : ''}</span> ${r.label}</span><span class="facet-count">(${count})</span></div>`;
+        }).join('');
+      }
+
+      renderSearchGrid() {
+        const items = this.getFilteredSearchResults();
+        document.getElementById('search-count-label').textContent = `Showing ${items.length} items of 75`;
+        
+        const grid = document.getElementById('search-product-grid');
+        if (items.length === 0) {
+          grid.innerHTML = `<div style="grid-column: 1/-1; padding: 40px; text-align: center; color: var(--text-muted);">No products match your search or filter criteria. <button class="reset-btn" onclick="app.resetFilters()">Reset Filters</button></div>`;
+          return;
+        }
+
+        grid.innerHTML = items.map(p => this.renderProductCard(p)).join('');
+      }
+
+      // Cart Actions
+      toggleCart() {
+        const overlay = document.getElementById('cart-overlay');
+        const drawer = document.getElementById('cart-drawer');
+        const isOpen = drawer.style.display === 'flex';
+        drawer.style.display = isOpen ? 'none' : 'flex';
+        overlay.style.display = isOpen ? 'none' : 'block';
+        if (!isOpen) {
+          this.renderCart();
+          this.logPromptAPITrace("Opened Cart Drawer (Evaluating In-Cart Recommendations)");
+        }
+      }
+
+      addToCart(productId, qty = 1) {
+        const item = this.cart.find(i => i.id === productId);
+        if (item) {
+          item.qty += qty;
+        } else {
+          this.cart.push({ id: productId, qty });
+        }
+        this.renderCart();
+        this.logPromptAPITrace(`Added to Cart: ${productId}`);
+      }
+
+      addCurrentPDPToCart() {
+        this.addToCart(this.currentPDPProduct.id);
+        this.toggleCart();
+      }
+
+      adjustQty(productId, delta) {
+        const index = this.cart.findIndex(i => i.id === productId);
+        if (index > -1) {
+          this.cart[index].qty += delta;
+          if (this.cart[index].qty <= 0) {
+            this.cart.splice(index, 1);
+          }
+        }
+        this.renderCart();
+      }
+
+      renderCart() {
+        const count = this.cart.reduce((sum, item) => sum + item.qty, 0);
+        document.getElementById('cart-badge-count').textContent = count;
+        document.getElementById('cart-title-count').textContent = count;
+
+        let subtotal = 0;
+        const container = document.getElementById('cart-items-container');
+
+        if (this.cart.length === 0) {
+          container.innerHTML = `<div style="padding: 20px; text-align: center; color: var(--text-muted);">Your cart is empty.</div>`;
+        } else {
+          container.innerHTML = this.cart.map(item => {
+            const product = CATALOG.find(p => p.id === item.id);
+            if (!product) return '';
+            const lineTotal = product.price * item.qty;
+            subtotal += lineTotal;
+            return `
+              <div class="cart-line-item">
+                <div class="cart-item-thumb"><svg viewBox="0 0 24 24"><path d="M12 2C8 2 5 6 5 11v9c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2v-9c0-5-3-9-7-9z"/></svg></div>
+                <div class="cart-item-info">
+                  <div class="cart-item-name">${product.name}</div>
+                  <div class="cart-item-qty-row">
+                    <button class="qty-btn" onclick="app.adjustQty('${item.id}', -1)">-</button>
+                    <span>${item.qty}</span>
+                    <button class="qty-btn" onclick="app.adjustQty('${item.id}', 1)">+</button>
+                  </div>
+                </div>
+                <div class="cart-item-price">$${lineTotal.toFixed(2)}</div>
+              </div>
+            `;
+          }).join('');
+        }
+
+        const taxes = subtotal * 0.14975;
+        const total = subtotal + taxes;
+
+        document.getElementById('order-subtotal').textContent = `$${subtotal.toFixed(2)}`;
+        document.getElementById('order-taxes').textContent = `$${taxes.toFixed(2)}`;
+        document.getElementById('order-total').textContent = `$${total.toFixed(2)}`;
+
+        // In-Cart "For You" Recommendations
+        const incartRecs = [
+          CATALOG.find(p => p.id === "warmer-rechargeable-hand-electronic"),
+          CATALOG.find(p => p.id === "repair-tenacious-gear-patch-tape")
+        ].filter(Boolean);
+
+        document.getElementById('incart-recs-container').innerHTML = incartRecs.map(rec => `
+          <div class="incart-card">
+            <div class="incart-thumb"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/></svg></div>
+            <div class="incart-info">
+              <div class="incart-name">${rec.name}</div>
+              <div class="incart-price">$${rec.price.toFixed(2)}</div>
+            </div>
+            <button class="quick-add-btn" onclick="app.addToCart('${rec.id}')">+ Add to Cart</button>
+          </div>
+        `).join('');
+      }
+    }
+
+    const app = new StoreApp();
+  </script>
+</body>
+</html>
