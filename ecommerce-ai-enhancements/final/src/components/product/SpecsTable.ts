@@ -164,3 +164,9 @@ export class SpecsTable extends HTMLElement {
 }
 
 customElements.define('specs-table', SpecsTable);
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'specs-table': SpecsTable;
+  }
+}

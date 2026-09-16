@@ -73,14 +73,12 @@ class RecommendationStore {
       try {
         const history = historyStore.getHistory();
         const cart = cartStore.getItems();
-        const activeActivity = historyStore.getActiveActivity();
 
         const recs = await recommendationCoordinator.getRecommendations(
           {
             history,
             cart,
             currentProductId: this.activeProductId,
-            activeActivity,
           },
           this.catalogMap,
           5

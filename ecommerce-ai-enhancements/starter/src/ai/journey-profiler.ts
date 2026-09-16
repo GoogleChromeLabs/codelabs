@@ -16,7 +16,7 @@
  */
 
 import { getPromptSession } from './prompt-api.ts';
-import { journeyProfileSchema, type JourneyProfileResponse } from './recommendation-schemas.ts';
+import { journeyProfileSchema } from './recommendation-schemas.ts';
 import {
   formatShopperJourney,
   type JourneyProfile,

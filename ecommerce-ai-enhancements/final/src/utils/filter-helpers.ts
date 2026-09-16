@@ -15,7 +15,16 @@
  * limitations under the License.
  */
 
-import { ACTIVITIES, CONDITIONS, PRODUCT_CATEGORIES, CATALOG, type Product } from '../catalog/dataset.ts';
+import {
+  ACTIVITIES,
+  CONDITIONS,
+  PRODUCT_CATEGORIES,
+  CATALOG,
+  type Product,
+  type ProductCategory,
+  type ActivityType,
+  type WeatherCondition,
+} from '../catalog/dataset.ts';
 import type { FacetItemData } from '../components/facets/BaseListFacet.ts';
 import type { FacetSidebarData } from '../components/facets/FacetSidebar.ts';
 
@@ -61,44 +70,48 @@ export function matchPrice(priceCAD: number, rangeId: string): boolean {
   return false;
 }
 
-export function testProductMatch(
-  p: Product,
-  state: FilterState,
-  overrides?: { skipFacet?: string; testFacet?: string; testValue?: any }
-): boolean {
+type FacetTestOverride =
+  | { testFacet: 'category'; testValue: ProductCategory }
+  | { testFacet: 'activity'; testValue: ActivityType }
+  | { testFacet: 'condition'; testValue: WeatherCondition }
+  | { testFacet: 'weight'; testValue: string }
+  | { testFacet: 'price'; testValue: string }
+  | { testFacet: 'rating'; testValue: number };
+
+export function testProductMatch(p: Product, state: FilterState, overrides?: FacetTestOverride): boolean {
   if (overrides?.testFacet === 'category') {
     if (!p.categories.includes(overrides.testValue)) return false;
-  } else if (overrides?.skipFacet !== 'category' && state.selectedCategories.size > 0) {
+  } else if (state.selectedCategories.size > 0) {
     if (!p.categories.some(c => state.selectedCategories.has(c))) return false;
   }
 
   if (overrides?.testFacet === 'activity') {
     if (!p.activities.includes(overrides.testValue)) return false;
-  } else if (overrides?.skipFacet !== 'activity' && state.selectedActivities.size > 0) {
+  } else if (state.selectedActivities.size > 0) {
     if (!p.activities.some(a => state.selectedActivities.has(a))) return false;
   }
 
   if (overrides?.testFacet === 'condition') {
     if (!p.conditions.includes(overrides.testValue)) return false;
-  } else if (overrides?.skipFacet !== 'condition' && state.selectedConditions.size > 0) {
+  } else if (state.selectedConditions.size > 0) {
     if (!p.conditions.some(c => state.selectedConditions.has(c))) return false;
   }
 
   if (overrides?.testFacet === 'weight') {
     if (!matchWeight(p.weight, overrides.testValue)) return false;
-  } else if (overrides?.skipFacet !== 'weight' && state.selectedWeights.size > 0) {
+  } else if (state.selectedWeights.size > 0) {
     if (!Array.from(state.selectedWeights).some(w => matchWeight(p.weight, w))) return false;
   }
 
   if (overrides?.testFacet === 'price') {
     if (!matchPrice(p.price, overrides.testValue)) return false;
-  } else if (overrides?.skipFacet !== 'price' && state.selectedPrices.size > 0) {
+  } else if (state.selectedPrices.size > 0) {
     if (!Array.from(state.selectedPrices).some(pr => matchPrice(p.price, pr))) return false;
   }
 
   if (overrides?.testFacet === 'rating') {
     if (p.rating < overrides.testValue) return false;
-  } else if (overrides?.skipFacet !== 'rating' && state.selectedRatings.size > 0) {
+  } else if (state.selectedRatings.size > 0) {
     if (!Array.from(state.selectedRatings).some(r => p.rating >= r)) return false;
   }
 
@@ -116,48 +129,48 @@ export function buildSidebarData(
   state: FilterState,
   options?: { hideCategory?: boolean; hideActivity?: boolean }
 ): FacetSidebarData {
-  const countFor = (facet: string, val: any) =>
-    CATALOG.filter(p => testProductMatch(p, state, { skipFacet: facet, testFacet: facet, testValue: val })).length;
+  const countFor = (override: FacetTestOverride) =>
+    CATALOG.filter(p => testProductMatch(p, state, override)).length;
 
   const categories: FacetItemData[] = PRODUCT_CATEGORIES.map(c => ({
     id: c,
     label: c,
-    count: countFor('category', c),
+    count: countFor({ testFacet: 'category', testValue: c }),
     checked: state.selectedCategories.has(c),
   }));
 
   const activities: FacetItemData[] = ACTIVITIES.map(a => ({
     id: a,
     label: a,
-    count: countFor('activity', a),
+    count: countFor({ testFacet: 'activity', testValue: a }),
     checked: state.selectedActivities.has(a),
   }));
 
   const conditions: FacetItemData[] = CONDITIONS.map(c => ({
     id: c,
     label: c,
-    count: countFor('condition', c),
+    count: countFor({ testFacet: 'condition', testValue: c }),
     checked: state.selectedConditions.has(c),
   }));
 
   const weights: FacetItemData[] = [
-    { id: '<500', label: '< 500 g', count: countFor('weight', '<500'), checked: state.selectedWeights.has('<500') },
-    { id: '500-1000', label: '500 g – 1 kg', count: countFor('weight', '500-1000'), checked: state.selectedWeights.has('500-1000') },
-    { id: '1000-2000', label: '1 kg – 2 kg', count: countFor('weight', '1000-2000'), checked: state.selectedWeights.has('1000-2000') },
-    { id: '>2000', label: '> 2 kg', count: countFor('weight', '>2000'), checked: state.selectedWeights.has('>2000') },
+    { id: '<500', label: '< 500 g', count: countFor({ testFacet: 'weight', testValue: '<500' }), checked: state.selectedWeights.has('<500') },
+    { id: '500-1000', label: '500 g – 1 kg', count: countFor({ testFacet: 'weight', testValue: '500-1000' }), checked: state.selectedWeights.has('500-1000') },
+    { id: '1000-2000', label: '1 kg – 2 kg', count: countFor({ testFacet: 'weight', testValue: '1000-2000' }), checked: state.selectedWeights.has('1000-2000') },
+    { id: '>2000', label: '> 2 kg', count: countFor({ testFacet: 'weight', testValue: '>2000' }), checked: state.selectedWeights.has('>2000') },
   ];
 
   const prices: FacetItemData[] = [
-    { id: '<50', label: '< $50', count: countFor('price', '<50'), checked: state.selectedPrices.has('<50') },
-    { id: '50-100', label: '$50 – $100', count: countFor('price', '50-100'), checked: state.selectedPrices.has('50-100') },
-    { id: '100-250', label: '$100 – $250', count: countFor('price', '100-250'), checked: state.selectedPrices.has('100-250') },
-    { id: '>250', label: '$250+', count: countFor('price', '>250'), checked: state.selectedPrices.has('>250') },
+    { id: '<50', label: '< $50', count: countFor({ testFacet: 'price', testValue: '<50' }), checked: state.selectedPrices.has('<50') },
+    { id: '50-100', label: '$50 – $100', count: countFor({ testFacet: 'price', testValue: '50-100' }), checked: state.selectedPrices.has('50-100') },
+    { id: '100-250', label: '$100 – $250', count: countFor({ testFacet: 'price', testValue: '100-250' }), checked: state.selectedPrices.has('100-250') },
+    { id: '>250', label: '$250+', count: countFor({ testFacet: 'price', testValue: '>250' }), checked: state.selectedPrices.has('>250') },
   ];
 
   const ratings: FacetItemData[] = [
-    { id: '3.0', label: '3+ ★', count: countFor('rating', 3.0), checked: state.selectedRatings.has(3.0) },
-    { id: '4.0', label: '4+ ★', count: countFor('rating', 4.0), checked: state.selectedRatings.has(4.0) },
-    { id: '4.8', label: '5 ★', count: countFor('rating', 4.8), checked: state.selectedRatings.has(4.8) },
+    { id: '3.0', label: '3+ ★', count: countFor({ testFacet: 'rating', testValue: 3.0 }), checked: state.selectedRatings.has(3.0) },
+    { id: '4.0', label: '4+ ★', count: countFor({ testFacet: 'rating', testValue: 4.0 }), checked: state.selectedRatings.has(4.0) },
+    { id: '4.8', label: '5 ★', count: countFor({ testFacet: 'rating', testValue: 4.8 }), checked: state.selectedRatings.has(4.8) },
   ];
 
   return {

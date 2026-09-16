@@ -15,9 +15,11 @@
  * limitations under the License.
  */
 
-import type { JourneyProfile, ProfilerInputContext } from '../ai/journey-profiler.ts';
+import type { JourneyProfile, ProfilerInputContext } from '../ai/journey-helpers.ts';
 import type { RecommendedItem } from '../ai/synergy-reranker.ts';
 import type { Product } from '../catalog/dataset.ts';
+import type { SemanticFilterResult } from '../ai/catalog-semantic-filter.ts';
+import type { SemanticFilterResponse } from '../ai/recommendation-schemas.ts';
 
 export interface PipelineTimings {
   readonly step1DurationMs: number;
@@ -41,6 +43,8 @@ const createTimingRow = (step: string, ms: number) => ({
   'Duration (ms)': `${ms.toFixed(1)} ms`,
   'Duration (s)': `${(ms / 1000).toFixed(2)} s`,
 });
+const stepLabel = (label: string, ms?: number): string =>
+  ms === undefined ? label : `${label} (${formatSec(ms)})`;
 
 export function logDevToolsTrace(payload: DevToolsTracePayload): void {
   const time = new Date().toLocaleTimeString();
@@ -70,20 +74,16 @@ export function logDevToolsTrace(payload: DevToolsTracePayload): void {
   console.log('Browsing History Timeline:', payload.context.timeline || payload.context.history || []);
   console.groupEnd();
 
-  const step1Label = payload.timings
-    ? `2. Step 1 — Inferred Journey Profile (${(payload.timings.step1DurationMs / 1000).toFixed(2)}s)`
-    : '2. Step 1 — Inferred Journey Profile';
-  console.group(step1Label);
+  console.group(stepLabel('2. Step 1 — Inferred Journey Profile', payload.timings?.step1DurationMs));
   console.log('Primary Activity:', payload.profile.primaryActivity);
   console.log('Implied Conditions:', payload.profile.impliedConditions);
   console.log('Target Categories:', payload.profile.targetCategories);
   console.log('Equipment Rationale:', payload.profile.equipmentRationale);
   console.groupEnd();
 
-  const step2Label = payload.timings
-    ? `3. Step 2 — Candidate Retrieval (${payload.candidates.length} products, ${(payload.timings.step2DurationMs / 1000).toFixed(2)}s)`
-    : `3. Step 2 — Candidate Retrieval (${payload.candidates.length} products)`;
-  console.group(step2Label);
+  console.group(
+    stepLabel(`3. Step 2 — Candidate Retrieval (${payload.candidates.length} products)`, payload.timings?.step2DurationMs)
+  );
   console.table(
     payload.candidates.map(c => ({
       ID: c.id,
@@ -95,10 +95,7 @@ export function logDevToolsTrace(payload: DevToolsTracePayload): void {
   );
   console.groupEnd();
 
-  const step3Label = payload.timings
-    ? `4. Step 3 — AI Synergy Re-Ranker Selections (${(payload.timings.step3DurationMs / 1000).toFixed(2)}s)`
-    : '4. Step 3 — AI Synergy Re-Ranker Selections';
-  console.group(step3Label);
+  console.group(stepLabel('4. Step 3 — AI Synergy Re-Ranker Selections', payload.timings?.step3DurationMs));
   console.table(
     payload.recommendations.map(r => ({
       ID: r.product.id,
@@ -122,8 +119,8 @@ export interface SemanticSearchTimings {
 export interface SemanticSearchTracePayload {
   readonly query: string;
   readonly cachedJourney: JourneyProfile | null;
-  readonly promptOutput: any;
-  readonly appliedFilters: any;
+  readonly promptOutput: SemanticFilterResponse;
+  readonly appliedFilters: SemanticFilterResult['appliedFilters'];
   readonly toolsExecuted: string[];
   readonly matchingProducts: readonly Product[];
   readonly cacheHit: boolean;
@@ -158,10 +155,7 @@ export function logSemanticSearchTrace(payload: SemanticSearchTracePayload): voi
   console.log('Cache Status:', payload.cacheHit ? 'Cache Hit' : 'Cold Inference');
   console.groupEnd();
 
-  const step1Label = payload.timings
-    ? `2. Step 1 — Cached Journey Profile (${(payload.timings.step1DurationMs / 1000).toFixed(2)}s)`
-    : '2. Step 1 — Cached Journey Profile';
-  console.group(step1Label);
+  console.group(stepLabel('2. Step 1 — Cached Journey Profile', payload.timings?.step1DurationMs));
   if (payload.cachedJourney) {
     console.log('Primary Activity:', payload.cachedJourney.primaryActivity);
     console.log('Implied Conditions:', payload.cachedJourney.impliedConditions);
@@ -172,18 +166,14 @@ export function logSemanticSearchTrace(payload: SemanticSearchTracePayload): voi
   }
   console.groupEnd();
 
-  const step2Label = payload.timings
-    ? `3. Step 2 — AI Prompt Inference (${(payload.timings.step2DurationMs / 1000).toFixed(2)}s)`
-    : '3. Step 2 — AI Prompt Inference';
-  console.group(step2Label);
+  console.group(stepLabel('3. Step 2 — AI Prompt Inference', payload.timings?.step2DurationMs));
   console.log('Prompt API Output:', payload.promptOutput);
   console.log('Applied Facet Filters:', payload.appliedFilters);
   console.groupEnd();
 
-  const step3Label = payload.timings
-    ? `4. Step 3 — WebMCP Filter Tools Execution (${payload.matchingProducts.length} products, ${(payload.timings.step3DurationMs / 1000).toFixed(2)}s)`
-    : `4. Step 3 — WebMCP Filter Tools Execution (${payload.matchingProducts.length} products)`;
-  console.group(step3Label);
+  console.group(
+    stepLabel(`4. Step 3 — WebMCP Filter Tools Execution (${payload.matchingProducts.length} products)`, payload.timings?.step3DurationMs)
+  );
   console.log('Tools Executed:', payload.toolsExecuted);
   console.table(
     payload.matchingProducts.map(p => ({

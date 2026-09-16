@@ -76,8 +76,8 @@ export class ProductCard extends HTMLElement {
 
     cartStore.addItem(this.product.id, 1);
 
-    const drawer = document.querySelector<any>('cart-drawer');
-    if (drawer?.show) drawer.show();
+    const drawer = document.querySelector('cart-drawer');
+    drawer?.show();
 
     const btn = this.querySelector<HTMLButtonElement>('.quick-add-btn');
     if (btn) {
@@ -147,3 +147,9 @@ export class ProductCard extends HTMLElement {
 }
 
 customElements.define('product-card', ProductCard);
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'product-card': ProductCard;
+  }
+}

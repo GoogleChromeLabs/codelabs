@@ -18,7 +18,7 @@
 import { recommendationStore } from '../../state/recommendation-store.ts';
 import type { RecommendedItem } from '../../ai/synergy-reranker.ts';
 import { translator } from '../../ai/translator.ts';
-import './ProductCard.ts';
+import { ProductCard } from './ProductCard.ts';
 
 export class ForYouSection extends HTMLElement {
   private unsubscribeStore: (() => void) | null = null;
@@ -90,7 +90,7 @@ export class ForYouSection extends HTMLElement {
         },
       }, { signal })?.catch(() => {});
     } catch {
-      // Ignore harmless registration race
+      // Ignore if tool is already active
     }
   }
 
@@ -153,8 +153,8 @@ export class ForYouSection extends HTMLElement {
     `;
 
     this.recommendations.forEach((rec, i) => {
-      const cardEl = this.querySelector<any>(`#rec-card-${i}`);
-      if (cardEl?.setProduct) {
+      const cardEl = this.querySelector<ProductCard>(`#rec-card-${i}`);
+      if (cardEl) {
         cardEl.setProduct(rec.product);
       }
     });

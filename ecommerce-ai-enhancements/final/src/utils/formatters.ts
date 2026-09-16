@@ -45,7 +45,7 @@ export function getActiveLocale(lang: SupportedLanguage = translator.language): 
 }
 
 /**
- * Formats a numerical amount into Canadian Dollars (CAD) using standard Intl.NumberFormat.
+ * Formats an amount as Canadian dollars.
  */
 export function formatCAD(amount: number, locale: string = getActiveLocale()): string {
   return new Intl.NumberFormat(locale, {
@@ -57,14 +57,14 @@ export function formatCAD(amount: number, locale: string = getActiveLocale()): s
 }
 
 /**
- * Formats numerical values using the active locale's numeral system and separators.
+ * Formats a number in the active locale's numeral system and separators.
  */
 export function formatNumber(num: number, locale: string = getActiveLocale()): string {
   return new Intl.NumberFormat(locale).format(num);
 }
 
 /**
- * Formats weight in grams or kilograms using standard Intl.NumberFormat unit styling.
+ * Formats a weight in grams, switching to kilograms at 1 kg and above.
  */
 export function formatGrams(grams: number, locale: string = getActiveLocale()): string {
   if (grams >= 1000) {
@@ -82,7 +82,7 @@ export function formatGrams(grams: number, locale: string = getActiveLocale()): 
 }
 
 /**
- * Formats star rating.
+ * Formats a rating as five filled or empty stars.
  */
 export function formatRatingStars(rating: number): string {
   const fullStars = Math.round(rating);

@@ -126,21 +126,25 @@ export class SiteHeader extends HTMLElement {
      * Expected Implementation:
      * When WebMCP is supported (document.modelContext?.registerTool):
      * 1. 'search':
+     *    - title: 'Search the Store'
      *    - description: Search the catalog using natural language or keywords by navigating to /catalog?q=<query>.
      *    - inputSchema: { type: 'object', properties: { query: { type: 'string' } }, required: ['query'] }
      *    - execute: (input) => { this.handleSearch(input.query); return { success: true, navigatedTo: ... }; }
      *
      * 2. 'go_to_catalog':
+     *    - title: 'Open the Catalog'
      *    - description: Navigate to the equipment catalog page, optionally pre-filtering by activity or category.
      *    - inputSchema: { type: 'object', properties: { activity: { type: 'string', enum: ACTIVITIES }, category: { type: 'string', enum: PRODUCT_CATEGORIES } } }
      *    - execute: (input) => { ... navigateTo(...); return { success: true, navigatedTo: ... }; }
      *
      * 3. 'get_categories_and_activities':
+     *    - title: 'Browse Categories and Activities'
      *    - description: Retrieve valid outdoor activities and product categories with pre-filtered catalog URLs.
      *    - annotations: { readOnlyHint: true }
      *    - execute: () => ({ activities: ..., categories: ... })
      *
      * 4. 'go_to_product':
+     *    - title: 'Open a Product Page'
      *    - description: Navigate to the Product Details Page (PDP) for a specific product ID.
      *    - inputSchema: { type: 'object', properties: { productId: { type: 'string' } }, required: ['productId'] }
      *    - execute: (input) => { navigateTo(`/catalog/${encodeURIComponent(input.productId)}`); return { success: true, productId: ... }; }

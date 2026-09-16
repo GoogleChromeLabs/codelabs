@@ -87,6 +87,7 @@ export class CartDrawer extends HTMLElement {
      * Expected Implementation:
      * When WebMCP is supported (document.modelContext?.registerTool):
      * 1. 'view_cart':
+     *    - title: 'View Cart'
      *    - description: View the shopping cart, calculate subtotal, Quebec taxes (14.975%), and total,
      *      open the cart drawer dialog, and return cart details and companion recommendations.
      *    - inputSchema: { type: 'object', properties: { openDrawer: { type: 'boolean' } } }
@@ -94,6 +95,7 @@ export class CartDrawer extends HTMLElement {
      *    - execute: async (input) => { if (input?.openDrawer !== false) this.show(); await recommendationStore.refresh(); return this.getCartSummary(); }
      *
      * 2. 'manage_cart':
+     *    - title: 'Add or Remove Cart Items'
      *    - description: Manage items in the shopping cart (add, update, remove) in batch or singly.
      *      Opens the cart drawer dialog and returns updated cart and recommendations.
      *    - inputSchema: {
@@ -284,3 +286,9 @@ export class CartDrawer extends HTMLElement {
 }
 
 customElements.define('cart-drawer', CartDrawer);
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'cart-drawer': CartDrawer;
+  }
+}

@@ -48,16 +48,6 @@ class ModelStatusStore {
     this.notify();
   }
 
-  public setComplete(modelName: string): void {
-    this.status = {
-      isDownloading: false,
-      progressPercent: 100,
-      modelName,
-      message: `${modelName} ready`,
-    };
-    this.notify();
-  }
-
   public reset(): void {
     this.status = {
       isDownloading: false,

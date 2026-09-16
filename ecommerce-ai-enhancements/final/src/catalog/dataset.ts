@@ -35,9 +35,7 @@ import { lanternProducts } from './data/lanterns.ts';
 import { navigationProducts } from './data/navigation.ts';
 import { firstAidProducts } from './data/first-aid.ts';
 
-/**
- * Primary outdoor activities (main navigation and primary facet pivot).
- */
+// Primary outdoor activities, used for main navigation and as the primary facet pivot.
 export const ACTIVITIES = [
   'Backpacking',
   'Camping',
@@ -49,9 +47,7 @@ export const ACTIVITIES = [
 
 export type ActivityType = (typeof ACTIVITIES)[number];
 
-/**
- * Single-concept, atomic product categories across equipment lines.
- */
+// Single-concept, atomic product categories across equipment lines.
 export const PRODUCT_CATEGORIES = [
   'Tents',
   'Shelters',
@@ -76,9 +72,7 @@ export const PRODUCT_CATEGORIES = [
 
 export type ProductCategory = (typeof PRODUCT_CATEGORIES)[number];
 
-/**
- * Atomic, single-attribute composable weather and environmental conditions.
- */
+// Atomic, single-attribute composable weather and environmental conditions.
 export const CONDITIONS = [
   'Sub-Zero',
   'Cold',
@@ -93,35 +87,31 @@ export const CONDITIONS = [
 
 export type WeatherCondition = (typeof CONDITIONS)[number];
 
-/**
- * Product domain entity within the 75-item catalog.
- */
+// A single item of gear in the catalog.
 export interface Product {
   readonly id: string;
   readonly name: string;
-  /** An item can belong to multiple categories (e.g. dry sacks belong to Backpacks and Dry Bags). */
+  // An item can belong to multiple categories (e.g. dry sacks belong to Backpacks and Dry Bags).
   readonly categories: readonly ProductCategory[];
-  /** An item can serve multiple outdoor activities. */
+  // An item can serve multiple outdoor activities.
   readonly activities: readonly ActivityType[];
-  /** Composable environmental condition tags. */
+  // Composable environmental condition tags.
   readonly conditions: readonly WeatherCondition[];
-  /** Weight in exact grams for sorting and Intl.NumberFormat display. */
+  // Weight in exact grams.
   readonly weight: number;
-  /** Price in Canadian Dollars (CAD). */
+  // Price in Canadian Dollars (CAD).
   readonly price: number;
   readonly rating: number;
   readonly reviews: number;
-  /** Narrative description of technical materials and construction. */
+  // Narrative description of technical materials and construction.
   readonly description: string;
-  /** Key-value technical specifications. */
+  // Key-value technical specifications.
   readonly specs: Readonly<Record<string, string>>;
-  /** Relative asset URL in public/images/catalog/. */
+  // Relative asset URL in public/images/catalog/.
   readonly image: string;
 }
 
-/**
- * Complete 75-item outdoor gear catalog.
- */
+// Every outdoor gear product offered across all equipment lines.
 export const CATALOG: readonly Product[] = [
   ...tentProducts,
   ...shelterProducts,

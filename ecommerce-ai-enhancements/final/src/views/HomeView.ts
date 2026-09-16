@@ -18,7 +18,7 @@
 import { CATALOG, ACTIVITIES, type Product } from '../catalog/dataset.ts';
 import { translator } from '../ai/translator.ts';
 import { formatNumber } from '../utils/formatters.ts';
-import '../components/product/ProductCard.ts';
+import { ProductCard } from '../components/product/ProductCard.ts';
 
 export class HomeView extends HTMLElement {
   private unsubscribeLang: (() => void) | null = null;
@@ -108,8 +108,8 @@ export class HomeView extends HTMLElement {
       .join('');
 
     featured.forEach((p, i) => {
-      const card = grid.querySelector<any>(`#home-card-${i}`);
-      if (card && typeof card.setProduct === 'function') card.setProduct(p);
+      const card = grid.querySelector<ProductCard>(`#home-card-${i}`);
+      card?.setProduct(p);
     });
   }
 

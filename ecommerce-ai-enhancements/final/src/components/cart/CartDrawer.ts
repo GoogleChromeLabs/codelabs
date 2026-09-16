@@ -131,9 +131,15 @@ export class CartDrawer extends HTMLElement {
       },
       execute: async (input: {
         items?: Array<{ productId: string; action?: 'add' | 'remove' | 'update'; quantity?: number }>;
-        productId?: string; action?: 'add' | 'remove' | 'update'; quantity?: number;
+        productId?: string;
+        action?: 'add' | 'remove' | 'update';
+        quantity?: number;
       }) => {
-        const ops = input?.items?.length ? input.items : input?.productId ? [input as any] : [];
+        const ops = input?.items?.length
+          ? input.items
+          : input?.productId
+            ? [{ productId: input.productId, action: input.action, quantity: input.quantity }]
+            : [];
         if (!ops.length) return { success: false, error: 'No items provided to manage_cart.' };
 
         for (const op of ops) {
@@ -329,3 +335,9 @@ export class CartDrawer extends HTMLElement {
 }
 
 customElements.define('cart-drawer', CartDrawer);
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'cart-drawer': CartDrawer;
+  }
+}

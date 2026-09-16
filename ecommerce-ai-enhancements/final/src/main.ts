@@ -23,6 +23,7 @@ import './views/HomeView.ts';
 import './views/CatalogView.ts';
 import './views/ProductView.ts';
 import { historyStore } from './state/history-store.ts';
+import { ACTIVITIES } from './catalog/dataset.ts';
 import { initRouter, type ParsedRoute } from './utils/router.ts';
 import type { CatalogView } from './views/CatalogView.ts';
 import type { ProductView } from './views/ProductView.ts';
@@ -39,8 +40,9 @@ app.innerHTML = `
 const mainContainer = app.querySelector<HTMLElement>('#main-content')!;
 
 async function handleRouteChange(route: ParsedRoute): Promise<void> {
-  if (route.activity) {
-    historyStore.recordActivity(route.activity as any);
+  const activity = ACTIVITIES.find(a => a === route.activity);
+  if (activity) {
+    historyStore.recordActivity(activity);
   }
 
   if (route.type === 'home') {

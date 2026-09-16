@@ -286,7 +286,7 @@ export class SiteHeader extends HTMLElement {
       </dialog>
     `;
 
-    // Create single unique search form
+    // Builds the one search form instance that moves between the header slot and the dialog slot.
     const form = document.createElement('form');
     form.className = 'site-search-form';
     form.id = 'site-search-form';

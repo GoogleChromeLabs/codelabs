@@ -29,7 +29,7 @@ import { historyStore } from '../state/history-store.ts';
 import { translator } from '../ai/translator.ts';
 import { formatNumber } from '../utils/formatters.ts';
 import { interpretAndApplySemanticFilter, prewarmSemanticFilterSession } from '../ai/catalog-semantic-filter.ts';
-import '../components/product/ProductCard.ts';
+import { ProductCard } from '../components/product/ProductCard.ts';
 
 export class CatalogView extends HTMLElement {
   private filterState: FilterState = createDefaultFilterState();
@@ -54,7 +54,7 @@ export class CatalogView extends HTMLElement {
 
   public attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void {
     if (oldValue !== newValue) {
-      if (name === 'mode') this.mode = (newValue as any) || 'catalog';
+      if (name === 'mode') this.mode = newValue === 'activity' || newValue === 'category' ? newValue : 'catalog';
       if (name === 'mode-value') this.modeValue = newValue || '';
       this.initFromUrl();
       this.updateView();
@@ -96,6 +96,7 @@ export class CatalogView extends HTMLElement {
      * Expected Implementation:
      * When WebMCP is supported (document.modelContext?.registerTool):
      * 1. 'list_items':
+     *    - title: 'List Matching Products'
      *    - description: Retrieve catalog items matching currently active filters and keywords.
      *    - inputSchema: { type: 'object', properties: {} }
      *    - annotations: { readOnlyHint: true }
@@ -105,6 +106,7 @@ export class CatalogView extends HTMLElement {
      *      }
      *
      * 2. 'reset_filters':
+     *    - title: 'Reset All Filters'
      *    - description: Clear all active catalog filters, categories, activities, conditions, brackets, and keywords.
      *    - inputSchema: { type: 'object', properties: {} }
      *    - execute: () => {
@@ -149,7 +151,8 @@ export class CatalogView extends HTMLElement {
       if (match) this.filterState.selectedCategories = new Set([match]);
     } else if (this.filterState.selectedActivities.size > 0) {
       const firstAct = Array.from(this.filterState.selectedActivities)[0];
-      if (firstAct) historyStore.recordActivity(firstAct as any);
+      const validAct = ACTIVITIES.find(a => a === firstAct);
+      if (validAct) historyStore.recordActivity(validAct);
     }
   }
 
@@ -193,10 +196,10 @@ export class CatalogView extends HTMLElement {
   }
 
   private setupListeners(): void {
-    this.addEventListener('facet-toggle', (e: any) =>
+    this.addEventListener('facet-toggle', e =>
       this.toggleFacet(e.detail.facetType, e.detail.value, e.detail.selected)
     );
-    this.addEventListener('search-filter-change', (e: any) => {
+    this.addEventListener('search-filter-change', e => {
       this.filterState.searchQuery = e.detail.query;
       this.syncUrlAndRefresh();
     });
@@ -212,18 +215,26 @@ export class CatalogView extends HTMLElement {
   }
 
   private toggleFacet(type: string, value: string, selected?: boolean): void {
-    const fs = this.filterState;
-    const setMap: Record<string, Set<any>> = {
-      category: fs.selectedCategories, activity: fs.selectedActivities,
-      condition: fs.selectedConditions, weight: fs.selectedWeights,
-      price: fs.selectedPrices, rating: fs.selectedRatings,
+    const toggleSet = <T>(set: Set<T>, v: T): void => {
+      if (selected === true) set.add(v);
+      else if (selected === false) set.delete(v);
+      else if (set.has(v)) set.delete(v);
+      else set.add(v);
     };
-    const s = setMap[type];
-    if (s) {
-      const v = type === 'rating' ? parseFloat(value) : value;
-      if (selected === true) s.add(v);
-      else if (selected === false) s.delete(v);
-      else if (s.has(v)) s.delete(v); else s.add(v);
+
+    const fs = this.filterState;
+    if (type === 'rating') {
+      toggleSet(fs.selectedRatings, parseFloat(value));
+    } else {
+      const stringSetMap: Record<string, Set<string> | undefined> = {
+        category: fs.selectedCategories,
+        activity: fs.selectedActivities,
+        condition: fs.selectedConditions,
+        weight: fs.selectedWeights,
+        price: fs.selectedPrices,
+      };
+      const s = stringSetMap[type];
+      if (s) toggleSet(s, value);
     }
     this.syncUrlAndRefresh();
   }
@@ -291,7 +302,7 @@ export class CatalogView extends HTMLElement {
       grid.innerHTML = `<li class="no-results" style="grid-column: 1 / -1; padding: 48px 20px; text-align: center; color: var(--text-muted); list-style: none;"><p style="font-size: 16px; font-weight: 700; color: var(--forest-dark); margin-bottom: 8px;">${this.localizedStrings.noResults}</p><p>${this.localizedStrings.noResultsSub}</p></li>`;
     } else {
       grid.innerHTML = products.map((_, i) => `<li class="product-grid-item"><product-card id="cat-card-${i}"></product-card></li>`).join('');
-      products.forEach((p, i) => grid.querySelector<any>(`#cat-card-${i}`)?.setProduct?.(p));
+      products.forEach((p, i) => grid.querySelector<ProductCard>(`#cat-card-${i}`)?.setProduct(p));
     }
   }
 
@@ -340,3 +351,14 @@ export class CatalogView extends HTMLElement {
 }
 
 customElements.define('catalog-view', CatalogView);
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'catalog-view': CatalogView;
+  }
+
+  interface HTMLElementEventMap {
+    'facet-toggle': CustomEvent<{ facetType: string; value: string; selected?: boolean }>;
+    'search-filter-change': CustomEvent<{ query: string }>;
+  }
+}

@@ -43,7 +43,7 @@ export class CatalogApi {
   }
 
   /**
-   * Queries balanced candidate inventory across target categories without heuristic scoring.
+   * Returns candidate products balanced across the requested categories.
    */
   public async queryCandidates(params: CatalogQueryParams): Promise<Product[]> {
     const limit = params.limit || 20;
@@ -84,7 +84,7 @@ export class CatalogApi {
     if (params.categories && params.categories.length > 0) {
       const itemsPerCat = Math.max(2, Math.ceil(limit / params.categories.length));
       for (const cat of params.categories) {
-        const catItems = available.filter(p => p.categories.includes(cat as any) && !selectedIds.has(p.id));
+        const catItems = available.filter(p => (p.categories as readonly string[]).includes(cat) && !selectedIds.has(p.id));
         for (const item of catItems.slice(0, itemsPerCat)) {
           selected.push(item);
           selectedIds.add(item.id);
@@ -96,7 +96,7 @@ export class CatalogApi {
 
     // 2. Backfill with activity matches if pool has remaining capacity
     if (selected.length < limit && params.activity) {
-      const actItems = available.filter(p => p.activities.includes(params.activity as any) && !selectedIds.has(p.id));
+      const actItems = available.filter(p => (p.activities as readonly string[]).includes(params.activity!) && !selectedIds.has(p.id));
       for (const item of actItems) {
         selected.push(item);
         selectedIds.add(item.id);

@@ -72,14 +72,8 @@ export const SUPPORTED_LANGUAGES: readonly LanguageOption[] = [
 
 export const SUPPORTED_LANGUAGE_CODES = SUPPORTED_LANGUAGES.map(l => l.code);
 
-/**
- * Manages on-device `Translator` sessions, one per target language.
- *
- * Named `TranslationManager` rather than `Translator` so it doesn't shadow the
- * global `Translator` constructor from the Translator API.
- *
- * @see https://developer.mozilla.org/en-US/docs/Web/API/Translator
- */
+// Manages on-device `Translator` sessions, one per target language.
+// https://developer.mozilla.org/en-US/docs/Web/API/Translator
 class TranslationManager {
   private currentLang: SupportedLanguage = 'en';
   private subscribers: Set<(lang: SupportedLanguage) => void> = new Set();
@@ -151,43 +145,44 @@ class TranslationManager {
     const pending = this.sessionPromises.get(lang);
     if (pending) return pending;
 
-    const promise = (async () => {
-      try {
-        const languagePair = { sourceLanguage: 'en', targetLanguage: lang };
-        const availability = await Translator.availability(languagePair);
-        if (availability === 'unavailable') return null;
-
-        const session = await Translator.create({
-          ...languagePair,
-          // Only attach a monitor when a download is actually pending.
-          ...(availability === 'available'
-            ? {}
-            : {
-                monitor(monitor) {
-                  monitor.addEventListener('downloadprogress', event => {
-                    // `loaded` is a fraction between 0 and 1.
-                    const percent = Math.round(event.loaded * 100);
-                    if (percent >= 100) {
-                      modelStatusStore.reset();
-                      return;
-                    }
-                    modelStatusStore.setDownloading(`Language Pack (${lang.toUpperCase()})`, percent);
-                  });
-                },
-              }),
-        });
-        this.sessions.set(lang, session);
-        return session;
-      } catch {
-        return null;
-      } finally {
-        modelStatusStore.reset();
-        this.sessionPromises.delete(lang);
-      }
-    })();
+    const promise = this.createSession(lang).finally(() => {
+      modelStatusStore.reset();
+      this.sessionPromises.delete(lang);
+    });
 
     this.sessionPromises.set(lang, promise);
     return promise;
+  }
+
+  private async createSession(lang: SupportedLanguage): Promise<Translator | null> {
+    try {
+      const languagePair = { sourceLanguage: 'en', targetLanguage: lang };
+      const availability = await Translator.availability(languagePair);
+      if (availability === 'unavailable') return null;
+
+      const createOptions: TranslatorCreateOptions = { ...languagePair };
+
+      // Only attach a monitor when a download is actually pending.
+      if (availability !== 'available') {
+        createOptions.monitor = (monitor: CreateMonitor) => {
+          monitor.addEventListener('downloadprogress', (event: ProgressEvent) => {
+            // `loaded` is a fraction between 0 and 1.
+            const percent = Math.round(event.loaded * 100);
+            if (percent >= 100) {
+              modelStatusStore.reset();
+              return;
+            }
+            modelStatusStore.setDownloading(`Language Pack (${lang.toUpperCase()})`, percent);
+          });
+        };
+      }
+
+      const session = await Translator.create(createOptions);
+      this.sessions.set(lang, session);
+      return session;
+    } catch {
+      return null;
+    }
   }
 
   /**

@@ -22,8 +22,9 @@ import { historyStore } from '../state/history-store.ts';
 import { translator } from '../ai/translator.ts';
 import { formatCAD, formatNumber, formatRatingStars } from '../utils/formatters.ts';
 import '../components/navigation/BreadcrumbsNav.ts';
-import '../components/product/SpecsTable.ts';
+import { SpecsTable } from '../components/product/SpecsTable.ts';
 import '../components/product/ForYouSection.ts';
+import '../components/cart/CartDrawer.ts';
 
 export class ProductView extends HTMLElement {
   private product: Product | null = null;
@@ -115,8 +116,8 @@ export class ProductView extends HTMLElement {
 
     cartStore.addItem(this.product.id, 1);
 
-    const drawer = document.querySelector<any>('cart-drawer');
-    if (drawer?.show) drawer.show();
+    const drawer = document.querySelector('cart-drawer');
+    if (drawer) drawer.show();
 
     const btn = this.querySelector<HTMLButtonElement>('.pdp-add-action');
     if (btn) {
@@ -208,8 +209,8 @@ export class ProductView extends HTMLElement {
       </div>
     `;
 
-    const specsEl = this.querySelector<any>('#pdp-specs-table');
-    if (specsEl && typeof specsEl.setProduct === 'function') {
+    const specsEl = this.querySelector<SpecsTable>('#pdp-specs-table');
+    if (specsEl) {
       specsEl.setProduct(p);
     }
 
