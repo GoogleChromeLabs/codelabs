@@ -17,51 +17,32 @@
 
 import { modelStatusStore } from '../state/model-status-store.ts';
 
-// Base sessions, keyed by System Prompt
+// Base sessions, keyed by system prompt
 const baseSessions = new Map<string, LanguageModel>();
+
+export const DEFAULT_SYSTEM_PROMPT =
+  `You are an expert sales associate for Mont-Royal Plein Air, a technical outdoor gear outfitter. Your job is to understand your customer's intended journey and help them find the perfect gear for their needs.`;
 
 /**
  * Returns a ready-to-prompt session carrying the given system instructions.
- *
- * The returned session is always a clone, so callers can `destroy()` it freely
- * without throwing away the cached base session.
- *
- * @param systemPrompt System instructions for the session. Passed through
- *   `initialPrompts` as a `system` message — this is the only way to set system
- *   instructions, and it must happen at creation time.
- * @param options.signal Aborts session creation.
- * @throws When the browser has no Prompt API, or the model cannot serve this
- *   configuration.
+ * The returned session is always a clone, so callers may destroy it without discarding the cached base session.
  */
 export async function getPromptSession(
-  systemPrompt: string = '',
+  systemPrompt: string = DEFAULT_SYSTEM_PROMPT,
   options: { signal?: AbortSignal } = {}
 ): Promise<LanguageModel> {
-  // Memoize the sessions, returning a clone with a new signal if one exists
+  // 1.1.1 Memoize the sessions, returning a clone with a new signal if one exists
 
-  // Check to see if the Prompt API is available
+  // 1.1.2 Check to see if the Prompt API is available
 
-  // Declare the expected inputs and outputs for the model we want to use
+  // 1.1.3 Declare the expected inputs and outputs for the model
 
-  // Check the model's availability
+  // 1.1.4 Check if the model is available and, if not, download the model
 
+  // 1.1.5 Create the Session
   // Build initial Language Model options, with signal
-  // const createOptions: LanguageModelCreateOptions = {
-
-  // }
 
   // Add in the system prompt, if there is one
 
-  // Check if the model is available and, if not, download the model
-  // if (availability !== 'available') {
-  //   // Update UI
-  //   modelStatusStore.setDownloading('Local AI Model', 0);
-
-  //   // Monitor download progress
-  //   createOptions.monitor = monitor => {
-
-  //   };
-  // }
-
-  // Add the session to the memoized cache, then return a clone.
+  // Create the session, memoize it, and return a clone
 }
