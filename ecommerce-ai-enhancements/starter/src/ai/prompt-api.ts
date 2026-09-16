@@ -46,41 +46,22 @@ export async function getPromptSession(
   // Check the model's availability
 
   // Build initial Language Model options, with signal
-  const createOptions: LanguageModelCreateOptions = {
+  // const createOptions: LanguageModelCreateOptions = {
 
-  }
+  // }
 
   // Add in the system prompt, if there is one
 
   // Check if the model is available and, if not, download the model
-  if (availability !== 'available') {
-    // Update UI
-    modelStatusStore.setDownloading('Local AI Model', 0);
+  // if (availability !== 'available') {
+  //   // Update UI
+  //   modelStatusStore.setDownloading('Local AI Model', 0);
 
-    // Monitor download progress
-    createOptions.monitor = monitor => {
+  //   // Monitor download progress
+  //   createOptions.monitor = monitor => {
 
-    };
-  }
+  //   };
+  // }
 
   // Add the session to the memoized cache, then return a clone.
-}
-
-/**
- * Warms up the model for a system prompt ahead of the user's first request.
- *
- * Call this as soon as intent is clear (a focused search box, a hovered AI
- * affordance) so the cold start happens while the user is still typing. Session
- * creation requires transient activation, so this must run from a user
- * interaction.
- */
-export async function prewarmPromptSession(systemPrompt: string = ''): Promise<void> {
-  if (!('LanguageModel' in self)) return;
-  try {
-    // Only the base session is kept; the clone exists purely to force creation.
-    const session = await getPromptSession(systemPrompt);
-    session.destroy();
-  } catch {
-    // Pre-warming is best effort: the real call will surface any error.
-  }
 }
