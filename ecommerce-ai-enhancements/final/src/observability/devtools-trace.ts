@@ -19,7 +19,7 @@ import type { JourneyProfile, ProfilerInputContext } from '../utils/journey-help
 import type { RecommendedItem } from '../ai/synergy-reranker.ts';
 import type { Product } from '../catalog/dataset.ts';
 import type { SemanticFilterResult } from '../ai/catalog-semantic-filter.ts';
-import type { SemanticFilterResponse } from '../ai/recommendation-schemas.ts';
+import type { SemanticFilterResponse } from '../utils/recommendation-schemas.ts';
 
 export interface PipelineTimings {
   readonly step1DurationMs: number;

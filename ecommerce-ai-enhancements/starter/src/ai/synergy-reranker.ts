@@ -16,7 +16,7 @@
  */
 
 import { getPromptSession } from './prompt-api.ts';
-import { createRankedProductIdsSchema } from './recommendation-schemas.ts';
+import { createRankedProductIdsSchema } from '../utils/recommendation-schemas.ts';
 import type { Product } from '../catalog/dataset.ts';
 import type { JourneyProfile } from '../utils/journey-helpers.ts';
 import {

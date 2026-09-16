@@ -21,7 +21,7 @@ import {
   type PriceRange,
   type WeightRange,
   type RatingTier,
-} from './recommendation-schemas.ts';
+} from '../utils/recommendation-schemas.ts';
 import { getPromptSession } from './prompt-api.ts';
 import type { JourneyProfile } from '../utils/journey-helpers.ts';
 import type { Product } from '../catalog/dataset.ts';

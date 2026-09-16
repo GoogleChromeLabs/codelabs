@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { recommendationCoordinator } from '../ai/recommendation-coordinator.ts';
+import { recommendationCoordinator } from '../utils/recommendation-coordinator.ts';
 import type { RecommendedItem } from '../ai/synergy-reranker.ts';
 import { historyStore } from './history-store.ts';
 import { cartStore } from './cart-store.ts';

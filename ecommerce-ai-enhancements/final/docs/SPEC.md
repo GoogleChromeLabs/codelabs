@@ -88,12 +88,17 @@ montreal/
 │           └── ... (all 75 product assets)
 ├── src/
 │   ├── ai/
-│   │   ├── prompt-api.ts                # LanguageModel lifecycle, capability detection & session helper
-│   │   ├── recommendation-schemas.ts    # JSON Schema definitions referencing dataset constants
+│   │   ├── catalog-semantic-filter.ts   # Catalog semantic filter tool & inference
 │   │   ├── journey-profiler.ts          # Step 1: AI Journey Profiler (Prompt API)
+│   │   ├── prompt-api.ts                # LanguageModel lifecycle, capability detection & session helper
 │   │   ├── synergy-reranker.ts          # Step 3: AI Synergy Re-Ranker (Prompt API)
-│   │   ├── recommendation-coordinator.ts# Clean 3-step recommendation pipeline orchestrator
 │   │   └── translator.ts                # Translator API integration service
+│   ├── utils/
+│   │   ├── recommendation-schemas.ts    # JSON Schema definitions referencing dataset constants
+│   │   ├── recommendation-coordinator.ts# Clean 3-step recommendation pipeline orchestrator
+│   │   ├── journey-helpers.ts           # Journey profiling formatting helpers
+│   │   ├── reranker-helpers.ts          # Synergy re-ranking candidate & prompt helpers
+│   │   └── translator-helpers.ts        # Language state, caching & translation coordinator
 │   ├── catalog/
 │   │   ├── dataset.ts                   # 75-item product catalog data, constants, and domain types
 │   │   └── catalog-api.ts               # Client API service calling /api/catalog endpoints
@@ -449,13 +454,13 @@ export const catalogApi = new CatalogApiService();
 
 ## 5. Streamlined, Teaching-Focused AI Recommendation Engine
 
-### 5.1 JSON Schemas (`src/ai/recommendation-schemas.ts`)
+### 5.1 JSON Schemas (`src/utils/recommendation-schemas.ts`)
 
 Directly references the single-source-of-truth constants from `dataset.ts`:
 
 ```typescript
 /**
- * @file src/ai/recommendation-schemas.ts
+ * @file src/utils/recommendation-schemas.ts
  * @description JSON Schema (2020-12) documents passed to prompt() as `responseConstraint`.
  *              Constrained decoding guarantees conformance, so JSON.parse() is the
  *              only post-processing step anywhere in the pipeline.
@@ -668,13 +673,13 @@ ${candidateList}
 
 ---
 
-### 5.4 Recommendation Pipeline Coordinator (`src/ai/recommendation-coordinator.ts`)
+### 5.4 Recommendation Pipeline Coordinator (`src/utils/recommendation-coordinator.ts`)
 
 A clean, 3-step orchestrator without complexity or boilerplate:
 
 ```typescript
 /**
- * @file src/ai/recommendation-coordinator.ts
+ * @file src/utils/recommendation-coordinator.ts
  * @description Orchestrates the 3-step AI recommendation pipeline.
  */
 
