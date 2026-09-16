@@ -61,6 +61,18 @@ export async function getPromptSession(
     throw new Error('The language model is unavailable for the requested configuration.');
   }
 
+  // Build initial Language Model options, with signal and system prompt
+  const createOptions: LanguageModelCreateOptions = {
+    expectedInputs,
+    expectedOutputs,
+    signal: options.signal,
+  };
+
+  // Add in the system prompt, if there is one
+  if (systemPrompt) {
+    createOptions.initialPrompts = [{ role: 'system', content: systemPrompt }];
+  }
+
   // Check if the model is available and, if not, download the model
   if (availability !== 'available') {
     // Update UI
@@ -77,18 +89,6 @@ export async function getPromptSession(
         modelStatusStore.setDownloading('Local AI Model', percent);
       });
     };
-  }
-
-  // Build initial Language Model options, with signal and system prompt
-  const createOptions: LanguageModelCreateOptions = {
-    expectedInputs,
-    expectedOutputs,
-    signal: options.signal,
-  };
-
-  // Add in the system prompt, if there is one
-  if (systemPrompt) {
-    createOptions.initialPrompts = [{ role: 'system', content: systemPrompt }];
   }
 
   // Add the session to the memoized cache, then return a clone.

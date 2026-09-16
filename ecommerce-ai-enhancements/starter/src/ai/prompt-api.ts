@@ -37,11 +37,13 @@ export async function getPromptSession(
 
   // 1.1.3 Declare the expected inputs and outputs for the model
 
-  // 1.1.4 Check if the model is available and, if not, download the model
-
-  // 1.1.5 Create the Session
+  // 1.1.4 Create options
   // Build initial Language Model options, with signal
 
+  //  Check if the model is available and, if not, add a monitor to the options
+
+  // 1.1.5 Create the Session
+  
   // Add in the system prompt, if there is one
 
   // Create the session, memoize it, and return a clone
