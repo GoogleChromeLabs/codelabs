@@ -44,6 +44,7 @@ export class WeightFacet extends BaseListFacet {
       document.modelContext.registerTool(
         {
           name: 'weight_filter',
+          title: 'Filter by Weight Range',
           description:
             'Inspect available weight brackets (\'<500\', \'500-1000\', \'1000-2000\', \'>2000\') with matching item counts and active states, or toggle a weight bracket filter on the catalog page. Use this tool when the user asks for ultralight gear or wants items within specific weight limits.',
           inputSchema: {

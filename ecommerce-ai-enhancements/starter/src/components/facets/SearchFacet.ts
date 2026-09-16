@@ -61,6 +61,7 @@ export class SearchFacet extends HTMLElement {
      *
      * Tool specification:
      * - name: 'keyword_filter'
+     * - title: 'Filter by Keyword'
      * - description: Inspect or set the keyword text query filtering items in the catalog sidebar.
      * - inputSchema: {
      *     type: 'object',

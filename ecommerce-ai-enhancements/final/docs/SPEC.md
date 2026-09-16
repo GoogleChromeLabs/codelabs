@@ -36,7 +36,7 @@ flowchart TD
         subgraph AIRecEngine["2. AI-Powered Recommendation Pipeline"]
             AI1["Step 1: AI Journey Profiler<br/>(journey-profiler.ts)<br/>• LanguageModel + journeyProfileSchema<br/>• Outputs implied conditions & target categories"]
             CATAPI["Step 2: Server API Query<br/>(catalog-api.ts)<br/>• fetch('/api/catalog/search?...')<br/>• Handled by Vite server middleware"]
-            AI2["Step 3: AI Synergy Re-Ranker<br/>(synergy-reranker.ts)<br/>• LanguageModel + reRankerSchema<br/>• Selects top items with synergy rationales"]
+            AI2["Step 3: AI Synergy Re-Ranker<br/>(synergy-reranker.ts)<br/>• LanguageModel + candidate-constrained schema<br/>• Selects top items with synergy rationales"]
         end
 
         subgraph UIComponents["3. Native Custom Elements Layer"]
@@ -155,6 +155,36 @@ montreal/
 ---
 
 ## 3. Co-located Domain Models & Full TypeScript Type System
+
+### 3.0 Web Platform Types
+
+No web platform API is typed by hand in this project. The built-in AI APIs are
+too new for TypeScript's bundled `lib.dom.d.ts`, which by policy only includes
+features shipped in two or more browser engines, so the types come from two
+generated packages instead:
+
+| Package | Installed as | Provides |
+| --- | --- | --- |
+| [`modern-web-types`](https://philipwalton.com/articles/modern-web-types/) | `@typescript/lib-dom` alias + `"libReplacement": true` | `LanguageModel`, `Translator`, `LanguageDetector`, `Summarizer`, `CreateMonitor`, `Availability`, the Navigation API, `Element.moveBefore()` |
+| [`webmcp-types`](https://github.com/webmachinelearning/webmcp-types) | `types` array in `tsconfig.json` | `Document.modelContext`, the `WebMCP` namespace |
+
+`modern-web-types` runs the same generator as TypeScript's official DOM types
+(`microsoft/TypeScript-DOM-lib-generator` over `w3c/webref` IDL) with a
+one-engine threshold, so its declarations are spec-derived rather than
+hand-transcribed. Because the alias replaces the whole DOM lib, `LanguageModel`
+and friends resolve as ordinary globals with no `import` and no
+`declare global`.
+
+The only hand-written declaration left in `src/types.d.ts` is
+`ModelContext.executeTool()`, which is in the WebMCP IDL and shipped in Chrome
+but is missing from `webmcp-types@0.1.6`. It is annotated with the IDL it
+mirrors and should be deleted when the package catches up.
+
+> **Why this matters:** an earlier revision of this project declared these APIs
+> by hand. The copies drifted from the spec — most damagingly, they typed a
+> `systemPrompt` option that `LanguageModel.create()` does not have and silently
+> ignores — and TypeScript happily accepted code that did nothing at runtime.
+> Generated types turn that class of bug into a compile error.
 
 ### 3.1 Single Source of Truth Constants & Catalog Types (`src/catalog/dataset.ts`)
 
@@ -426,54 +456,66 @@ Directly references the single-source-of-truth constants from `dataset.ts`:
 ```typescript
 /**
  * @file src/ai/recommendation-schemas.ts
- * @description Strict JSON Schemas referencing dataset constants for responseConstraint.
+ * @description JSON Schema (2020-12) documents passed to prompt() as `responseConstraint`.
+ *              Constrained decoding guarantees conformance, so JSON.parse() is the
+ *              only post-processing step anywhere in the pipeline.
  */
 
 import { CONDITIONS, ACTIVITIES, PRODUCT_CATEGORIES } from '../catalog/dataset';
 
+const JSON_SCHEMA_DIALECT = 'https://json-schema.org/draft/2020-12/schema';
+
 export const journeyProfileSchema = {
+  $schema: JSON_SCHEMA_DIALECT,
+  title: 'Shopper journey profile',
   type: 'object',
   properties: {
-    impliedConditions: {
-      type: 'array',
-      items: {
-        type: 'string',
-        enum: CONDITIONS,
-      },
-    },
     primaryActivity: {
+      description: 'The single overarching outdoor activity the shopper is outfitting for.',
       type: 'string',
-      enum: ACTIVITIES,
+      enum: [...ACTIVITIES],
+    },
+    impliedConditions: {
+      description: 'Environmental conditions implied by the browsed gear and activities.',
+      type: 'array',
+      items: { type: 'string', enum: [...CONDITIONS] },
+      minItems: 1,
+      maxItems: 4,
     },
     targetCategories: {
+      description: 'Three to six complementary gear categories that would complete the kit.',
       type: 'array',
-      items: {
-        type: 'string',
-        enum: PRODUCT_CATEGORIES,
-      },
+      items: { type: 'string', enum: [...PRODUCT_CATEGORIES] },
+      minItems: 3,
+      maxItems: 6,
     },
-    equipmentRationale: { type: 'string' },
   },
-  required: ['impliedConditions', 'primaryActivity', 'targetCategories', 'equipmentRationale'],
+  required: ['primaryActivity', 'impliedConditions', 'targetCategories'],
+  additionalProperties: false,
 };
 
-export const reRankerSelectionSchema = {
-  type: 'object',
-  properties: {
-    recommendations: {
-      type: 'array',
-      items: {
-        type: 'object',
-        properties: {
-          id: { type: 'string' },
-          synergyRationale: { type: 'string' },
-        },
-        required: ['id', 'synergyRationale'],
+/**
+ * Built per request so the `enum` is the exact candidate shortlist: the model
+ * cannot return an ID that isn't in the catalog query results.
+ */
+export function createRankedProductIdsSchema(candidateIds: readonly string[], maxItems: number) {
+  return {
+    $schema: JSON_SCHEMA_DIALECT,
+    title: 'Ranked complementary gear',
+    type: 'object',
+    properties: {
+      rankedProductIds: {
+        description: 'Product IDs copied verbatim from the candidate list, best pairing first.',
+        type: 'array',
+        items: { type: 'string', enum: [...candidateIds] },
+        minItems: Math.min(1, candidateIds.length),
+        maxItems: Math.min(maxItems, candidateIds.length),
       },
     },
-  },
-  required: ['recommendations'],
-};
+    required: ['rankedProductIds'],
+    additionalProperties: false,
+  };
+}
 ```
 
 ---
@@ -488,7 +530,7 @@ A focused, single-purpose module extracting the user's intent:
  * @description Step 1: Synthesizes shopper intent into a structured JourneyProfile.
  */
 
-import { promptAPIManager } from './prompt-api';
+import { getPromptSession } from './prompt-api';
 import { journeyProfileSchema } from './recommendation-schemas';
 import type { WeatherCondition, ActivityType, ProductCategory, Product } from '../catalog/dataset';
 
@@ -516,7 +558,9 @@ export async function inferJourneyProfile(
   context: ProfilerInputContext,
   catalogMap: ReadonlyMap<string, Product>
 ): Promise<JourneyProfile> {
-  const session = await promptAPIManager.getSession(JOURNEY_PROFILER_SYSTEM_PROMPT);
+  // Creates (or clones) a session whose system instructions were supplied via
+  // create()'s `initialPrompts` as a `system` message.
+  const session = await getPromptSession(JOURNEY_PROFILER_SYSTEM_PROMPT);
 
   const viewedDetails = context.history
     .map(h => catalogMap.get(h.productId))
@@ -563,8 +607,8 @@ A focused module selecting top companion items with rationales:
  * @description Step 3: Evaluates candidate products and selects top companion gear with rationales.
  */
 
-import { promptAPIManager } from './prompt-api';
-import { reRankerSelectionSchema } from './recommendation-schemas';
+import { getPromptSession } from './prompt-api';
+import { createRankedProductIdsSchema } from './recommendation-schemas';
 import type { Product } from '../catalog/dataset';
 import type { JourneyProfile } from './journey-profiler';
 
@@ -585,7 +629,7 @@ export async function rankComplementaryGear(
   candidates: readonly Product[],
   limit: number = 3
 ): Promise<readonly RecommendedItem[]> {
-  const session = await promptAPIManager.getSession(RE_RANKER_SYSTEM_PROMPT);
+  const session = await getPromptSession(RE_RANKER_SYSTEM_PROMPT);
 
   const candidateList = candidates
     .map(c => `- ID: "${c.id}" | ${c.name} | Cat: ${c.categories.join('/')} | Act: ${c.activities.join('/')} | Wt: ${c.weight}g | Price: $${c.price} | Specs: ${c.description}`)
@@ -601,7 +645,7 @@ ${candidateList}
 `.trim();
 
   const rawJson = await session.prompt(promptText, {
-    responseConstraint: reRankerSelectionSchema,
+    responseConstraint: createRankedProductIdsSchema(candidates.map(c => c.id), limit),
   });
   session.destroy();
 
@@ -661,7 +705,7 @@ export class RecommendationCoordinator {
       limit: 15,
     });
 
-    // Step 3: AI Synergy Re-Ranker (LanguageModel + reRankerSelectionSchema)
+    // Step 3: AI Synergy Re-Ranker (LanguageModel + candidate-constrained JSON Schema)
     const recommendations = await rankComplementaryGear(profile, candidates, limit);
 
     // Log structured trace to DevTools console

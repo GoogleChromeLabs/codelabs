@@ -58,6 +58,7 @@ export class ConditionFacet extends HTMLElement {
     try {
       document.modelContext.registerTool({
         name: 'condition_filter',
+        title: 'Filter by Weather Condition',
         description: 'Inspect available environmental conditions with their matching product counts and active selection states, or toggle a condition filter on the catalog page. Use this tool to find gear certified for conditions like "Rain", "Snow", "Sub-Zero", "High Wind", "Extreme Cold", or "4-Season".',
         inputSchema: {
           type: 'object',

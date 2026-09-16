@@ -59,6 +59,7 @@ export class SearchFacet extends HTMLElement {
       document.modelContext.registerTool(
         {
           name: 'keyword_filter',
+          title: 'Filter by Keyword',
           description:
             'Inspect or set the keyword text query filtering items in the catalog sidebar (sets the ?keyword= query parameter). The filter performs an exact case-insensitive substring match against product titles and descriptions. Use concise single keywords or exact text fragments (e.g. "tent", "merino", "titanium", "down"). Do not use natural language phrases or questions that will fail substring matching.',
           inputSchema: {

@@ -88,6 +88,7 @@ export class CartDrawer extends HTMLElement {
 
     document.modelContext.registerTool({
       name: 'view_cart',
+      title: 'View Cart',
       description: 'View the shopping cart, calculate subtotal, Quebec taxes (14.975%), and total, open the cart drawer dialog, and return the updated cart and recommendations to complete the cart, which you must show to the user. You must display these recommendations to help the user complete their cart.',
       inputSchema: {
         type: 'object',
@@ -105,6 +106,7 @@ export class CartDrawer extends HTMLElement {
 
     document.modelContext.registerTool({
       name: 'manage_cart',
+      title: 'Add or Remove Cart Items',
       description: 'Manage items in the shopping cart: add, update, or remove one or multiple products at once. Opens the cart drawer dialog and returns the updated cart and recommendations to complete the cart, which you must show to the user. Whenever you modify the cart, you must display and suggest these recommended products to the user to help them complete their expedition kit.',
       inputSchema: {
         type: 'object',

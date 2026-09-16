@@ -72,11 +72,19 @@ export const SUPPORTED_LANGUAGES: readonly LanguageOption[] = [
 
 export const SUPPORTED_LANGUAGE_CODES = SUPPORTED_LANGUAGES.map(l => l.code);
 
-class Translator {
+/**
+ * Manages on-device `Translator` sessions, one per target language.
+ *
+ * Named `TranslationManager` rather than `Translator` so it doesn't shadow the
+ * global `Translator` constructor from the Translator API.
+ *
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/Translator
+ */
+class TranslationManager {
   private currentLang: SupportedLanguage = 'en';
   private subscribers: Set<(lang: SupportedLanguage) => void> = new Set();
-  private sessions: Map<SupportedLanguage, TranslatorSession> = new Map();
-  private sessionPromises: Map<SupportedLanguage, Promise<TranslatorSession | null>> = new Map();
+  private sessions: Map<SupportedLanguage, Translator> = new Map();
+  private sessionPromises: Map<SupportedLanguage, Promise<Translator | null>> = new Map();
   private memoryCache: Map<string, string> = new Map();
   private inFlight: Map<string, Promise<string>> = new Map();
   private initialized: boolean = false;
@@ -133,8 +141,9 @@ class Translator {
     }
   }
 
-  public async getSession(lang: SupportedLanguage = this.currentLang): Promise<TranslatorSession | null> {
+  public async getSession(lang: SupportedLanguage = this.currentLang): Promise<Translator | null> {
     if (lang === 'en') return null;
+    if (!('Translator' in self)) return null;
 
     const existing = this.sessions.get(lang);
     if (existing) return existing;
@@ -144,30 +153,35 @@ class Translator {
 
     const promise = (async () => {
       try {
-        const session = await window.Translator.create({
-          sourceLanguage: 'en',
-          targetLanguage: lang,
-          monitor: (m: EventTarget) => {
-            m.addEventListener('downloadprogress', (e: Event) => {
-              const p = e as LanguageModelDownloadProgressEvent;
-              if (p.total && p.total > 0 && p.loaded < p.total) {
-                modelStatusStore.setDownloading(
-                  `Language Pack (${lang.toUpperCase()})`,
-                  Math.round((p.loaded / p.total) * 100)
-                );
-              } else if (p.loaded >= p.total) {
-                modelStatusStore.reset();
-              }
-            });
-          },
+        const languagePair = { sourceLanguage: 'en', targetLanguage: lang };
+        const availability = await Translator.availability(languagePair);
+        if (availability === 'unavailable') return null;
+
+        const session = await Translator.create({
+          ...languagePair,
+          // Only attach a monitor when a download is actually pending.
+          ...(availability === 'available'
+            ? {}
+            : {
+                monitor(monitor) {
+                  monitor.addEventListener('downloadprogress', event => {
+                    // `loaded` is a fraction between 0 and 1.
+                    const percent = Math.round(event.loaded * 100);
+                    if (percent >= 100) {
+                      modelStatusStore.reset();
+                      return;
+                    }
+                    modelStatusStore.setDownloading(`Language Pack (${lang.toUpperCase()})`, percent);
+                  });
+                },
+              }),
         });
-        modelStatusStore.reset();
         this.sessions.set(lang, session);
         return session;
       } catch {
-        modelStatusStore.reset();
         return null;
       } finally {
+        modelStatusStore.reset();
         this.sessionPromises.delete(lang);
       }
     })();
@@ -223,4 +237,4 @@ class Translator {
   }
 }
 
-export const translator = new Translator();
+export const translator = new TranslationManager();

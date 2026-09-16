@@ -51,35 +51,44 @@ export async function inferJourneyProfile(
   /*
    * TODO: Implement Journey Profile Inference using Chrome's Prompt API (LanguageModel).
    *
+   * Docs: https://developer.mozilla.org/en-US/docs/Web/API/LanguageModel
+   *
    * Expected Implementation:
-   * 1. Obtain a Prompt API session configured with the system prompt:
-   *    const session = await window.LanguageModel.create({
-   *      systemPrompt: JOURNEY_PROFILER_SYSTEM_PROMPT,
-   *      expectedInputLanguages: ['en'],
-   *      expectedOutputLanguages: ['en'],
-   *      outputLanguage: 'en',
+   * 1. Obtain a Prompt API session carrying the system instructions. System
+   *    instructions are a `system` message in `initialPrompts`, and can only be
+   *    set when the session is created:
+   *
+   *    const session = await LanguageModel.create({
+   *      initialPrompts: [{ role: 'system', content: JOURNEY_PROFILER_SYSTEM_PROMPT }],
+   *      expectedInputs: [{ type: 'text', languages: ['en'] }],
+   *      expectedOutputs: [{ type: 'text', languages: ['en'] }],
    *    });
-   *    // Or use the shared helper: const session = await getPromptSession(JOURNEY_PROFILER_SYSTEM_PROMPT);
+   *
+   *    // Or use the shared helper, which also handles availability, download
+   *    // progress, and session cloning:
+   *    const session = await getPromptSession(JOURNEY_PROFILER_SYSTEM_PROMPT);
    *
    * 2. Format the chronological browsing journey from context.timeline (up to 5 recent events,
    *    ordered chronologically from earliest to latest) and active items in the cart (context.cart),
    *    mapping product IDs to catalog names, categories, and activities using catalogMap.
    *
    * 3. Construct the prompt text instructing the model to synthesize:
-   *    - Implied weather conditions (e.g. "Mild", "Dry", "Rain", "Cold")
+   *    - Implied weather conditions (e.g. "Mild", "Dry", "Wet", "Cold")
    *    - Overarching primary outdoor activity (e.g. "Camping", "Hiking", "Backpacking")
    *    - 3 to 6 complementary target categories (e.g. "Tents", "Sleeping Bags", "Pads")
    *
-   * 4. Prompt the model with structured output constraints (responseConstraint: journeyProfileSchema):
+   * 4. Prompt the model with a JSON Schema as the `responseConstraint`. The only
+   *    other options `prompt()` accepts are `omitResponseConstraintInput` and
+   *    `signal` — language options belong on `create()`, not here:
+   *
    *    const rawJson = await session.prompt(promptText, {
    *      responseConstraint: journeyProfileSchema,
-   *      expectedInputLanguages: ['en'],
-   *      expectedOutputLanguages: ['en'],
-   *      outputLanguage: 'en',
    *    });
    *
-   * 5. Parse the returned JSON, normalize the extracted target categories against PRODUCT_CATEGORIES,
-   *    and destroy the session in a finally block to free GPU/NPU memory:
+   * 5. Because journeyProfileSchema pins every field to a catalog enum, the
+   *    response always conforms: JSON.parse(rawJson) is the entire parsing step,
+   *    with no normalization or validation pass. Destroy the session in a
+   *    `finally` block to free device memory:
    *    session.destroy();
    *
    * 6. Return the synthesized JourneyProfile object.

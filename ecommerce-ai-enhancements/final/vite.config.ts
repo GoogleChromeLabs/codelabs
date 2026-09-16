@@ -91,4 +91,30 @@ function catalogServerPlugin(): Plugin {
 
 export default defineConfig({
   plugins: [catalogServerPlugin()],
+
+  resolve: {
+    /*
+     * The `starter/` app is a symlink farm: everything that isn't part of the
+     * exercise (`state/`, `utils/`, `components/common/`, `main.ts`, …) is a
+     * symlink into `final/src/`, and only the ~15 files attendees actually
+     * write are real files.
+     *
+     * By default Vite resolves a module to its realpath. That turns
+     * `starter/src/main.ts` into `final/src/main.ts`, and because module
+     * resolution is relative to the resolved id, every one of its imports then
+     * comes from `final/src/` too. The result: the starter dev server ran the
+     * *finished* code end to end, and `starter/src/ai/journey-profiler.ts` &
+     * friends were never loaded — an attendee could complete every TODO and
+     * see no change.
+     *
+     * Preserving symlinks keeps ids under `starter/src/`, so shared modules
+     * still come from `final/` (via the links) while the exercise files
+     * resolve to the attendee's own code.
+     *
+     * This is a no-op for `final/`, which contains no symlinks.
+     *
+     * @see https://vite.dev/config/shared-options.html#resolve-preservesymlinks
+     */
+    preserveSymlinks: true,
+  },
 });

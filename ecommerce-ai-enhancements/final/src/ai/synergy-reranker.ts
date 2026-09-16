@@ -16,7 +16,7 @@
  */
 
 import { getPromptSession } from './prompt-api.ts';
-import { reRankerSelectionSchema } from './recommendation-schemas.ts';
+import { createRankedProductIdsSchema, type RankedProductIdsResponse } from './recommendation-schemas.ts';
 import type { Product } from '../catalog/dataset.ts';
 import type { JourneyProfile } from './journey-profiler.ts';
 
@@ -87,8 +87,10 @@ export async function rankComplementaryGear(
     return aRepl - bRepl;
   });
 
-  const candidateList = prioritizedCandidates
-    .slice(0, 20)
+  // The shortlist the model is allowed to choose from. The same IDs are used
+  // for the prompt text and for the schema's enum, so they can never drift.
+  const shortlist = prioritizedCandidates.slice(0, 20);
+  const candidateList = shortlist
     .map(c => `- ID: "${c.id}" | ${c.name} | Cat: ${c.categories.join('/')} | $${c.price}`)
     .join('\n');
 
@@ -107,36 +109,36 @@ PRIORITIZATION INSTRUCTIONS:
 3. DEPRIORITIZE REPLACEMENTS: If a category is already in the cart (e.g. Tents), do NOT recommend another item in that category. Recommend accessories or missing kit essentials instead.
 4. Complete the overarching expedition journey.
 
-Rank top 5 product IDs.
+Rank the top ${limit} product IDs.
 `.trim();
 
   try {
+    // Constraining the enum to this request's candidate IDs means the model
+    // cannot hallucinate, truncate, or reformat an ID.
     const rawJson = await session.prompt(promptText, {
-      responseConstraint: reRankerSelectionSchema,
-      expectedInputLanguages: ['en'],
-      expectedOutputLanguages: ['en'],
-      expectedInputs: [{ type: 'text', language: 'en' }],
-      expectedOutputs: [{ type: 'text', language: 'en' }],
-      outputLanguage: 'en',
+      responseConstraint: createRankedProductIdsSchema(
+        shortlist.map(c => c.id),
+        limit
+      ),
     });
 
-    const parsed = JSON.parse(rawJson) as {
-      rankedProductIds: string[];
-    };
+    const parsed = JSON.parse(rawJson) as RankedProductIdsResponse;
 
     const nonReplacements: RecommendedItem[] = [];
     const replacements: RecommendedItem[] = [];
+    const seen = new Set<string>();
 
-    for (const id of parsed.rankedProductIds || []) {
-      const product = candidates.find(c => c.id === id);
-      if (product && !nonReplacements.some(r => r.product.id === product.id) && !replacements.some(r => r.product.id === product.id)) {
-        const cat = product.categories[0] || 'Gear';
-        const item = { product, synergyRationale: `${profile.primaryActivity} Synergy • ${cat}` };
-        if (isReplacementCandidate(product, cartProducts)) {
-          replacements.push(item);
-        } else {
-          nonReplacements.push(item);
-        }
+    for (const id of parsed.rankedProductIds) {
+      if (seen.has(id)) continue;
+      seen.add(id);
+
+      const product = shortlist.find(c => c.id === id)!;
+      const cat = product.categories[0] || 'Gear';
+      const item = { product, synergyRationale: `${profile.primaryActivity} Synergy • ${cat}` };
+      if (isReplacementCandidate(product, cartProducts)) {
+        replacements.push(item);
+      } else {
+        nonReplacements.push(item);
       }
     }
 

@@ -69,8 +69,11 @@ export async function prewarmSemanticFilterSession(): Promise<void> {
    * TODO: Prewarm the Prompt API session for the semantic catalog filter.
    *
    * When implemented:
-   * Call prewarmPromptSession(SEMANTIC_FILTER_SYSTEM_PROMPT) or initialize
-   * a base session with window.LanguageModel.create({ systemPrompt: SEMANTIC_FILTER_SYSTEM_PROMPT }).
+   * Call prewarmPromptSession(SEMANTIC_FILTER_SYSTEM_PROMPT), which creates a
+   * base session with the system instructions in `initialPrompts` so the first
+   * real search doesn't pay the cold-start cost. Trigger it from a user
+   * interaction (focusing the search box): LanguageModel.create() requires
+   * transient activation.
    */
 }
 
@@ -91,11 +94,23 @@ export async function interpretAndApplySemanticFilter(searchTerm: string): Promi
    *
    * 3. Construct prompt combining the natural language query and journey context:
    *    - Analyze query for category, activity, conditions, price constraints, weight constraints, rating, and keyword.
-   *    - Prompt session with structured schema (responseConstraint: semanticFilterSchema).
-   *    - Parse resulting JSON and destroy session in finally block: session.destroy().
+   *    - Pass semanticFilterSchema as the prompt's `responseConstraint`:
+   *      const rawJson = await session.prompt(promptText, { responseConstraint: semanticFilterSchema });
+   *    - Every field in that schema is pinned to a catalog enum (or null), so
+   *      JSON.parse(rawJson) is all the parsing you need — no validation pass.
+   *    - Destroy the session in a finally block: session.destroy().
    *
    * 4. Apply extracted filters dynamically via WebMCP tools:
-   *    - Inspect available tools using document.modelContext.getTools().
+   *    - Inspect available tools using document.modelContext.getTools(). Each
+   *      entry is a RegisteredTool: { name, title, description, inputSchema,
+   *      window, origin }.
+   *    - Run one by calling:
+   *        const json = await document.modelContext.executeTool(tool, args);
+   *      It resolves with a DOMString, so JSON.parse() the result.
+   *    - Compatibility note: the spec passes `args` as a plain object and
+   *      serializes it for you, but Chrome currently rejects an object with
+   *      "Failed to parse input arguments" and wants JSON.stringify(args)
+   *      instead. Try the spec form first and fall back once.
    *    - Execute 'reset_filters' to start with a clean filter state.
    *    - Sequentially invoke registered WebMCP filter tools:
    *      * 'category_filter' with { category, selected: true }

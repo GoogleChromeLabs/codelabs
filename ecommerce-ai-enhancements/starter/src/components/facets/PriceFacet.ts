@@ -45,6 +45,7 @@ export class PriceFacet extends BaseListFacet {
      *
      * Tool specification:
      * - name: 'price_filter'
+     * - title: 'Filter by Price Range'
      * - description: Inspect available price tiers or toggle a price filter.
      * - inputSchema: {
      *     type: 'object',

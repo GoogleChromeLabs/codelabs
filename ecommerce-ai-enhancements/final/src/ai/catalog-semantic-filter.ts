@@ -15,7 +15,13 @@
  * limitations under the License.
  */
 
-import { semanticFilterSchema } from './recommendation-schemas.ts';
+import {
+  semanticFilterSchema,
+  type SemanticFilterResponse,
+  type PriceRange,
+  type WeightRange,
+  type RatingTier,
+} from './recommendation-schemas.ts';
 import { getPromptSession, prewarmPromptSession } from './prompt-api.ts';
 import { logSemanticSearchTrace } from '../observability/devtools-trace.ts';
 import { persistentCache } from '../utils/persistent-cache.ts';
@@ -29,9 +35,7 @@ import {
 } from '../catalog/dataset.ts';
 import { PRICE_RANGES, WEIGHT_RANGES, RATING_TIERS } from '../utils/filter-helpers.ts';
 
-export type PriceRange = (typeof PRICE_RANGES)[number];
-export type WeightRange = (typeof WEIGHT_RANGES)[number];
-export type RatingTier = (typeof RATING_TIERS)[number];
+export type { PriceRange, WeightRange, RatingTier };
 
 export const SEMANTIC_FILTER_SYSTEM_PROMPT = `
 You are the Intelligent Catalog Filter Assistant for Mont-Royal Plein Air.
@@ -84,7 +88,7 @@ export async function interpretAndApplySemanticFilter(searchTerm: string): Promi
     cachedJourney ? `${cachedJourney.primaryActivity}:${(cachedJourney.targetCategories || []).join(',')}` : 'fresh'
   );
 
-  let parsed: any = await persistentCache.get('ai_cache', cacheKey);
+  let parsed = await persistentCache.get<SemanticFilterResponse>('ai_cache', cacheKey);
   const cacheHit = !!parsed;
   let t2 = performance.now();
 
@@ -103,12 +107,12 @@ ${journeyContextText}
 Determine the optimal facet filters and optional material/feature keyword (e.g. "down"). Return the JSON object according to the schema.`.trim();
 
     try {
+      // Constrained decoding against semanticFilterSchema: the response is
+      // always a conforming JSON document, so no repair or coercion is needed.
       const rawJson = await session.prompt(promptText, {
         responseConstraint: semanticFilterSchema,
-        outputLanguage: 'en',
-        expectedOutputLanguages: ['en'],
       });
-      parsed = JSON.parse(rawJson);
+      parsed = JSON.parse(rawJson) as SemanticFilterResponse;
       await persistentCache.set('ai_cache', cacheKey, parsed);
     } finally {
       session.destroy();
@@ -116,24 +120,30 @@ Determine the optimal facet filters and optional material/feature keyword (e.g. 
     t2 = performance.now();
   }
 
-  // Validate against domain constants and ensure price/weight/rating were actually requested
-  const category = PRODUCT_CATEGORIES.find(c => c === parsed.category);
-  const activity = ACTIVITIES.find(a => a === parsed.activity);
-  const conditions = (parsed.conditions || []).filter((c: any) => CONDITIONS.includes(c));
+  // The schema guarantees these are catalog enum members or null, so there is
+  // nothing left to validate — only product decisions to make.
+  const category = parsed.category ?? undefined;
+  const activity = parsed.activity ?? undefined;
+  const conditions = parsed.conditions;
 
+  // Guardrail: only honour numeric facets the shopper actually asked about, so
+  // an inferred budget never silently hides products.
   const queryHasPrice = /(under|below|\$|cheap|budget|cost|price|less than|>|<)/i.test(searchTerm);
   const queryHasWeight = /(light|ultralight|gram|weight|heavy|kg|oz)/i.test(searchTerm);
   const queryHasRating = /(star|rating|reviewed|top|best)/i.test(searchTerm);
 
-  const priceRange = queryHasPrice ? PRICE_RANGES.find(p => p === parsed.priceRange) : undefined;
-  const weightRange = queryHasWeight ? WEIGHT_RANGES.find(w => w === parsed.weightRange) : undefined;
-  const minRating = queryHasRating ? RATING_TIERS.find(r => r === parsed.minRating) : undefined;
+  const priceRange = queryHasPrice ? parsed.priceRange ?? undefined : undefined;
+  const weightRange = queryHasWeight ? parsed.weightRange ?? undefined : undefined;
+  const minRating = queryHasRating ? parsed.minRating ?? undefined : undefined;
 
-  const rawKw = parsed.keyword?.trim() || '';
+  // Guardrail: a keyword that repeats the category or a condition would filter
+  // the results down to nothing useful.
+  const rawKw = parsed.keyword?.trim() ?? '';
   const isRedundant = rawKw.toLowerCase() === category?.toLowerCase() ||
     conditions.some((c: string) => c.toLowerCase() === rawKw.toLowerCase()) ||
     ['bag', 'bags', 'sleeping bag', 'tent', 'tents', 'pack', 'packs', 'gear'].includes(rawKw.toLowerCase());
   const keyword = isRedundant ? '' : rawKw;
+
 
   const appliedFilters: SemanticFilterResult['appliedFilters'] = {};
   const toolsExecuted: string[] = [];
@@ -142,14 +152,47 @@ Determine the optimal facet filters and optional material/feature keyword (e.g. 
     const modelCtx = document.modelContext;
     const allTools = await modelCtx.getTools();
 
-    const executeFacet = async (toolName: string, args: Record<string, any>): Promise<any> => {
+    /*
+     * WebMCP defines `executeTool(tool, inputObject, options)` where
+     * `inputObject` is a plain JavaScript object: the spec serializes it to
+     * JSON for us and rejects with a `TypeError` if it "is not an Object".
+     * Chrome has not caught up to that step yet — today it wants the JSON
+     * string itself and rejects an object with "Failed to parse input
+     * arguments".
+     *
+     * So: call it the way the spec says, and fall back to the string form only
+     * once we've actually seen the spec form fail. When Chrome lands the
+     * conversion this code starts taking the first branch with no changes, and
+     * the fallback can be deleted.
+     *
+     * @see https://webmachinelearning.github.io/webmcp/#dom-modelcontext-executetool
+     */
+    let needsSerializedInput = false;
+
+    const executeFacet = async (
+      toolName: string,
+      args: Record<string, unknown>
+    ): Promise<any> => {
       const tool = allTools.find(t => t.name === toolName);
-      if (tool && (modelCtx as any).executeTool) {
-        toolsExecuted.push(toolName);
-        const res = await (modelCtx as any).executeTool(tool, JSON.stringify(args));
-        return typeof res === 'string' ? JSON.parse(res) : res;
+      if (!tool) return null;
+
+      toolsExecuted.push(toolName);
+
+      let result: string;
+      if (needsSerializedInput) {
+        result = await modelCtx.executeTool(tool, JSON.stringify(args));
+      } else {
+        try {
+          result = await modelCtx.executeTool(tool, args);
+        } catch {
+          needsSerializedInput = true;
+          result = await modelCtx.executeTool(tool, JSON.stringify(args));
+        }
       }
-      return null;
+
+      // `executeTool()` resolves with a `DOMString`, so the tool's return value
+      // always arrives as JSON.
+      return JSON.parse(result);
     };
 
     // 1. Reset filters to clean slate
@@ -188,20 +231,47 @@ Determine the optimal facet filters and optional material/feature keyword (e.g. 
       await executeFacet('keyword_filter', { keyword });
     }
 
-    // Gracefully relax constraints if query yielded 0 results
-    let listRes = await executeFacet('list_items', {});
-    if (listRes && listRes.totalCount === 0) {
-      if (keyword) {
+    // If the inferred facets matched nothing, peel them back one at a time,
+    // most speculative first, until the shopper has something to look at.
+    const relaxations: (() => Promise<void>)[] = [];
+    if (keyword) {
+      relaxations.push(async () => {
         await executeFacet('keyword_filter', { keyword: '' });
         appliedFilters.keyword = '';
-        listRes = await executeFacet('list_items', {});
-      }
-      if (listRes && listRes.totalCount === 0 && conditions.length > 0) {
+      });
+    }
+    if (conditions.length > 0) {
+      relaxations.push(async () => {
         for (const cond of conditions) {
           await executeFacet('condition_filter', { condition: cond, selected: false });
         }
         delete appliedFilters.conditions;
-      }
+      });
+    }
+    if (weightRange) {
+      relaxations.push(async () => {
+        await executeFacet('weight_filter', { weightRange, selected: false });
+        delete appliedFilters.weightRange;
+      });
+    }
+    if (priceRange) {
+      relaxations.push(async () => {
+        await executeFacet('price_filter', { priceRange, selected: false });
+        delete appliedFilters.priceRange;
+      });
+    }
+    if (minRating) {
+      relaxations.push(async () => {
+        await executeFacet('rating_filter', { minRating, selected: false });
+        delete appliedFilters.minRating;
+      });
+    }
+
+    let listRes = await executeFacet('list_items', {});
+    for (const relax of relaxations) {
+      if (!listRes || listRes.totalCount > 0) break;
+      await relax();
+      listRes = await executeFacet('list_items', {});
     }
   }
 
@@ -239,6 +309,7 @@ export function registerCatalogSemanticFilterTool(signal?: AbortSignal): void {
   try {
     document.modelContext.registerTool({
       name: 'semantic_catalog_filter',
+      title: 'Search the Catalog in Plain Language',
       description: 'Search and filter the catalog using natural language. Analyzes user search query against the cached journey profile to determine and automatically apply the appropriate category, activity, condition, price, weight, rating, and keyword filters using the catalog WebMCP filter tools. This tool runs exclusively on the catalog page and uses cached journey state without mutating the recommendation engine.',
       inputSchema: {
         type: 'object',

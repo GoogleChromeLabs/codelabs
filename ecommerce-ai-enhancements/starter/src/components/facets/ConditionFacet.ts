@@ -60,6 +60,7 @@ export class ConditionFacet extends HTMLElement {
      *
      * Tool specification:
      * - name: 'condition_filter'
+     * - title: 'Filter by Weather Condition'
      * - description: Inspect available environmental conditions or toggle a condition filter.
      * - inputSchema: {
      *     type: 'object',

@@ -45,6 +45,7 @@ export class CategoryFacet extends BaseListFacet {
      *
      * Tool specification:
      * - name: 'category_filter'
+     * - title: 'Filter by Category'
      * - description: Inspect available product categories or toggle a specific category filter.
      * - inputSchema: {
      *     type: 'object',

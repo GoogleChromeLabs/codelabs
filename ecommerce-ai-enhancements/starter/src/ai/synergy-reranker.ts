@@ -70,14 +70,18 @@ export async function rankComplementaryGear(
   /*
    * TODO: Implement Synergy Re-Ranking using Chrome's Prompt API (LanguageModel).
    *
+   * Docs: https://developer.mozilla.org/en-US/docs/Web/API/LanguageModel/prompt
+   *
    * Expected Implementation:
-   * 1. Obtain a Prompt API session configured with the re-ranker system prompt:
-   *    const session = await window.LanguageModel.create({
-   *      systemPrompt: RE_RANKER_SYSTEM_PROMPT,
-   *      expectedInputLanguages: ['en'],
-   *      expectedOutputLanguages: ['en'],
-   *      outputLanguage: 'en',
+   * 1. Obtain a Prompt API session carrying the re-ranker system instructions.
+   *    System instructions go in `initialPrompts` at creation time:
+   *
+   *    const session = await LanguageModel.create({
+   *      initialPrompts: [{ role: 'system', content: RE_RANKER_SYSTEM_PROMPT }],
+   *      expectedInputs: [{ type: 'text', languages: ['en'] }],
+   *      expectedOutputs: [{ type: 'text', languages: ['en'] }],
    *    });
+   *
    *    // Or use the shared helper: const session = await getPromptSession(RE_RANKER_SYSTEM_PROMPT);
    *
    * 2. Format the candidate gear, active product, and cart contents into the prompt text:
@@ -93,17 +97,18 @@ export async function rankComplementaryGear(
    *    - Third: Overarching journey completion.
    *    - Mandatory: Deprioritize replacements in categories already in cart.
    *
-   * 4. Prompt the model with structured output constraints (responseConstraint: reRankerSelectionSchema):
+   * 4. Build a JSON Schema whose `enum` is this request's candidate IDs, then
+   *    pass it as `responseConstraint`. Constrained decoding then makes it
+   *    impossible for the model to return an ID that isn't in the shortlist:
+   *
    *    const rawJson = await session.prompt(promptText, {
-   *      responseConstraint: reRankerSelectionSchema,
-   *      expectedInputLanguages: ['en'],
-   *      expectedOutputLanguages: ['en'],
-   *      outputLanguage: 'en',
+   *      responseConstraint: createRankedProductIdsSchema(shortlist.map(c => c.id), limit),
    *    });
    *
-   * 5. Parse the ranked product IDs from the model output, map them back to candidate Product
-   *    objects, and attach synergy rationales (e.g. `${profile.primaryActivity} Synergy • ${cat}`).
-   *    Backfill with non-replacement candidates if the model returns fewer than the requested limit.
+   * 5. JSON.parse the result and map each ID straight back to its Product — the
+   *    lookup cannot miss. Attach synergy rationales (e.g.
+   *    `${profile.primaryActivity} Synergy • ${cat}`) and backfill with
+   *    non-replacement candidates if the model returned fewer than `limit`.
    *
    * 6. Destroy the session in a finally block:
    *    session.destroy();

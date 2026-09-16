@@ -79,6 +79,7 @@ export class ForYouSection extends HTMLElement {
      *
      * Tool specification:
      * - name: 'get_recommendations'
+     * - title: 'Get Recommended Products'
      * - description: Retrieve the 5 AI-generated companion products recommended to complete the kit for the current product.
      * - inputSchema: { type: 'object', properties: {} }
      * - annotations: { readOnlyHint: true }

@@ -16,8 +16,8 @@
  */
 
 import { getPromptSession } from './prompt-api.ts';
-import { journeyProfileSchema } from './recommendation-schemas.ts';
-import { PRODUCT_CATEGORIES, type WeatherCondition, type ActivityType, type ProductCategory, type Product } from '../catalog/dataset.ts';
+import { journeyProfileSchema, type JourneyProfileResponse } from './recommendation-schemas.ts';
+import type { WeatherCondition, ActivityType, ProductCategory, Product } from '../catalog/dataset.ts';
 import type { HistoryTimelineEvent } from '../state/history-store.ts';
 
 export const JOURNEY_PROFILER_SYSTEM_PROMPT = `
@@ -81,45 +81,23 @@ Synthesize the holistic journey profile and select 3-6 complementary categories.
 `.trim();
 
   try {
+    // `responseConstraint` makes the model emit a document that conforms to
+    // journeyProfileSchema, so JSON.parse is the only parsing step required.
     const rawJson = await session.prompt(promptText, {
       responseConstraint: journeyProfileSchema,
-      expectedInputLanguages: ['en'],
-      expectedOutputLanguages: ['en'],
-      expectedInputs: [{ type: 'text', language: 'en' }],
-      expectedOutputs: [{ type: 'text', language: 'en' }],
-      outputLanguage: 'en',
     });
 
-    const parsed = JSON.parse(rawJson) as {
-      primaryActivity: ActivityType;
-      impliedConditions: WeatherCondition[];
-      targetCategories: string[];
-    };
+    const parsed = JSON.parse(rawJson) as JourneyProfileResponse;
 
-    // Normalize target categories to dataset categories
-    const normalizedCategories: ProductCategory[] = [];
-    for (const catStr of parsed.targetCategories || []) {
-      const match = PRODUCT_CATEGORIES.find(
-        c => c.toLowerCase() === catStr.toLowerCase().trim() ||
-             catStr.toLowerCase().includes(c.toLowerCase()) ||
-             c.toLowerCase().includes(catStr.toLowerCase())
-      );
-      if (match && !normalizedCategories.includes(match)) {
-        normalizedCategories.push(match);
-      }
-    }
-
-    const targetCategories: readonly ProductCategory[] = normalizedCategories.length > 0
-      ? normalizedCategories
-      : (['Tents', 'Sleeping Bags', 'Pads', 'Stoves', 'Lanterns'] as const);
+    // Values are guaranteed to be catalog enums; only de-duplication is left,
+    // since JSON Schema cannot express "unique items" to a constrained decoder.
+    const targetCategories = [...new Set(parsed.targetCategories)];
 
     return {
-      primaryActivity: parsed.primaryActivity || 'Camping',
-      impliedConditions: (parsed.impliedConditions && parsed.impliedConditions.length > 0)
-        ? parsed.impliedConditions
-        : ['Mild', 'Dry'],
+      primaryActivity: parsed.primaryActivity,
+      impliedConditions: parsed.impliedConditions,
       targetCategories,
-      equipmentRationale: `${parsed.primaryActivity || 'Outdoor'} Companion Kit`,
+      equipmentRationale: `${parsed.primaryActivity} Companion Kit`,
     };
   } finally {
     session.destroy();

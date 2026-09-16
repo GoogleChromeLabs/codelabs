@@ -228,6 +228,7 @@ export class ProductView extends HTMLElement {
     try {
       document.modelContext.registerTool({
         name: 'get_current_product',
+        title: 'Get Current Product',
         description: 'Retrieve full technical specifications, pricing, customer rating, review count, environmental conditions, and recommendations to complete the kit, which you must show to the user. Whenever you retrieve this product, you must display these recommended companion items to the user.',
         inputSchema: { type: 'object', properties: {} },
         annotations: { readOnlyHint: true },

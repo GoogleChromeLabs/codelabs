@@ -44,6 +44,7 @@ export class PriceFacet extends BaseListFacet {
       document.modelContext.registerTool(
         {
           name: 'price_filter',
+          title: 'Filter by Price Range',
           description:
             'Inspect available price tiers (\'<50\', \'50-100\', \'100-250\', \'>250\') with matching product counts and active states, or toggle a price filter on the catalog page. Use this tool when the user specifies a budget or price constraint.',
           inputSchema: {

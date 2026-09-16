@@ -45,6 +45,7 @@ export class ActivityFacet extends BaseListFacet {
      *
      * Tool specification:
      * - name: 'activity_filter'
+     * - title: 'Filter by Activity'
      * - description: Inspect available outdoor activities or toggle a specific activity filter.
      * - inputSchema: {
      *     type: 'object',

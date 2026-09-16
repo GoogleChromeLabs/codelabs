@@ -44,6 +44,7 @@ export class CategoryFacet extends BaseListFacet {
       document.modelContext.registerTool(
         {
           name: 'category_filter',
+          title: 'Filter by Category',
           description:
             'Inspect available product categories with their matching item counts and active selection states, or toggle a specific category filter on the catalog page. Use this tool when you need to see what categories are available or narrow down the catalog to gear categories like "tents", "backpacks", or "boots".',
           inputSchema: {

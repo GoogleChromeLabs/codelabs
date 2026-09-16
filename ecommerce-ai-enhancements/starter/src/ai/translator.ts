@@ -72,11 +72,19 @@ export const SUPPORTED_LANGUAGES: readonly LanguageOption[] = [
 
 export const SUPPORTED_LANGUAGE_CODES = SUPPORTED_LANGUAGES.map(l => l.code);
 
-class Translator {
+/**
+ * Manages on-device `Translator` sessions, one per target language.
+ *
+ * Named `TranslationManager` rather than `Translator` so it doesn't shadow the
+ * global `Translator` constructor from the Translator API.
+ *
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/Translator
+ */
+class TranslationManager {
   private currentLang: SupportedLanguage = 'en';
   private subscribers: Set<(lang: SupportedLanguage) => void> = new Set();
-  private sessions: Map<SupportedLanguage, TranslatorSession> = new Map();
-  private sessionPromises: Map<SupportedLanguage, Promise<TranslatorSession | null>> = new Map();
+  private sessions: Map<SupportedLanguage, Translator> = new Map();
+  private sessionPromises: Map<SupportedLanguage, Promise<Translator | null>> = new Map();
   private memoryCache: Map<string, string> = new Map();
   private inFlight: Map<string, Promise<string>> = new Map();
   private initialized: boolean = false;
@@ -139,34 +147,38 @@ class Translator {
     }
   }
 
-  public async getSession(lang: SupportedLanguage = this.currentLang): Promise<TranslatorSession | null> {
+  public async getSession(lang: SupportedLanguage = this.currentLang): Promise<Translator | null> {
     if (lang === 'en') return null;
 
     /*
      * TODO [Stretch Goal: Explore more built-in AI models]:
      * Implement on-device translation session management using Chrome's built-in Translator API.
      *
+     * Docs: https://developer.mozilla.org/en-US/docs/Web/API/Translator
+     *
      * Expected Implementation:
-     * 1. Check if a session already exists in this.sessions for the target language.
+     * 1. Feature-detect with `'Translator' in self`, then check this.sessions
+     *    for an existing session for the target language.
      * 2. If an initialization promise is in-flight in this.sessionPromises, reuse it.
-     * 3. Create a new translation session via window.Translator.create:
-     *    const session = await window.Translator.create({
-     *      sourceLanguage: 'en',
-     *      targetLanguage: lang,
-     *      monitor: (m: EventTarget) => {
-     *        m.addEventListener('downloadprogress', (e: Event) => {
-     *          const p = e as LanguageModelDownloadProgressEvent;
-     *          if (p.total && p.total > 0 && p.loaded < p.total) {
-     *            modelStatusStore.setDownloading(
-     *              `Language Pack (${lang.toUpperCase()})`,
-     *              Math.round((p.loaded / p.total) * 100)
-     *            );
-     *          } else if (p.loaded >= p.total) {
-     *            modelStatusStore.reset();
-     *          }
+     * 3. Check support before creating, and only attach a download monitor when
+     *    a download is actually pending:
+     *
+     *    const languagePair = { sourceLanguage: 'en', targetLanguage: lang };
+     *    const availability = await Translator.availability(languagePair);
+     *    // 'available' | 'downloadable' | 'downloading' | 'unavailable'
+     *    if (availability === 'unavailable') return null;
+     *
+     *    const session = await Translator.create({
+     *      ...languagePair,
+     *      monitor: (monitor: CreateMonitor) => {
+     *        monitor.addEventListener('downloadprogress', (event: ProgressEvent) => {
+     *          // `loaded` is a fraction between 0 and 1 — scale it, don't divide by total.
+     *          const percent = Math.round(event.loaded * 100);
+     *          modelStatusStore.setDownloading(`Language Pack (${lang.toUpperCase()})`, percent);
      *        });
      *      },
      *    });
+     *
      * 4. Cache the resulting session in this.sessions and return it.
      * 5. Clean up pending promises and reset status indicators in a finally block.
      */
@@ -189,7 +201,7 @@ class Translator {
      *
      * Expected Implementation:
      * 1. Check memoryCache and IndexedDB ('translations_cache') for existing translations.
-     * 2. If uncached, obtain a TranslatorSession via this.getSession(targetLang).
+     * 2. If uncached, obtain a Translator session via this.getSession(targetLang).
      * 3. If session is available, translate the string:
      *    const translated = await session.translate(text);
      * 4. Store the translated text in memoryCache and persistentCache ('translations_cache').
@@ -208,4 +220,4 @@ class Translator {
   }
 }
 
-export const translator = new Translator();
+export const translator = new TranslationManager();

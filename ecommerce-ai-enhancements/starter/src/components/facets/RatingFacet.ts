@@ -45,6 +45,7 @@ export class RatingFacet extends BaseListFacet {
      *
      * Tool specification:
      * - name: 'rating_filter'
+     * - title: 'Filter by Customer Rating'
      * - description: Inspect available customer rating thresholds or toggle a minimum rating filter.
      * - inputSchema: {
      *     type: 'object',

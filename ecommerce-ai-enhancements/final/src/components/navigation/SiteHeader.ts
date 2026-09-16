@@ -127,6 +127,7 @@ export class SiteHeader extends HTMLElement {
 
     document.modelContext.registerTool({
       name: 'search',
+      title: 'Search the Store',
       description: 'Search the catalog using natural language or keywords by navigating to `/catalog?q=<query>`. On the catalog page, this activates the on-device AI semantic filter using the shopper journey profile.',
       inputSchema: {
         type: 'object',
@@ -144,6 +145,7 @@ export class SiteHeader extends HTMLElement {
 
     document.modelContext.registerTool({
       name: 'go_to_catalog',
+      title: 'Open the Catalog',
       description: 'Navigate to the equipment catalog page, optionally pre-filtering by a specific activity or product category.',
       inputSchema: {
         type: 'object',
@@ -163,6 +165,7 @@ export class SiteHeader extends HTMLElement {
 
     document.modelContext.registerTool({
       name: 'get_categories_and_activities',
+      title: 'Browse Categories and Activities',
       description: 'Retrieve valid outdoor activities and product categories with pre-filtered catalog URLs.',
       inputSchema: { type: 'object', properties: {} },
       annotations: { readOnlyHint: true },
@@ -174,6 +177,7 @@ export class SiteHeader extends HTMLElement {
 
     document.modelContext.registerTool({
       name: 'go_to_product',
+      title: 'Open a Product Page',
       description: 'Navigate to the Product Details Page (PDP) for a specific product by its ID (e.g. "tent-mont-tremblant-3p").',
       inputSchema: {
         type: 'object',

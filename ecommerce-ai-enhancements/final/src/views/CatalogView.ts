@@ -97,6 +97,7 @@ export class CatalogView extends HTMLElement {
 
     document.modelContext.registerTool({
       name: 'list_items',
+      title: 'List Matching Products',
       description: 'Retrieve catalog items matching currently active filters and keywords.',
       inputSchema: { type: 'object', properties: {} },
       annotations: { readOnlyHint: true },
@@ -115,6 +116,7 @@ export class CatalogView extends HTMLElement {
 
     document.modelContext.registerTool({
       name: 'reset_filters',
+      title: 'Reset All Filters',
       description: 'Clear all active catalog filters, categories, activities, conditions, brackets, and keywords.',
       inputSchema: { type: 'object', properties: {} },
       execute: () => {

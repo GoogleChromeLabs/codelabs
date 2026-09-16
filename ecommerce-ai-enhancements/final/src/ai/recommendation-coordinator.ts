@@ -105,7 +105,7 @@ export class RecommendationCoordinator {
         });
         const step2DurationMs = performance.now() - step2Start;
 
-        // Step 3: AI Synergy Re-Ranker (LanguageModel + reRankerSelectionSchema)
+        // Step 3: AI Synergy Re-Ranker (LanguageModel + candidate-constrained JSON Schema)
         const step3Start = performance.now();
         const recommendations = await rankComplementaryGear(profile, candidates, currentProd, cartProds, 5);
         const step3DurationMs = performance.now() - step3Start;

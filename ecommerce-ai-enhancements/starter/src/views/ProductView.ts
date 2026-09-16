@@ -230,6 +230,7 @@ export class ProductView extends HTMLElement {
      *
      * Tool specification:
      * - name: 'get_current_product'
+     * - title: 'Get Current Product'
      * - description: Retrieve full technical specs and recommendations for current product.
      * - inputSchema: { type: 'object', properties: {} }
      * - annotations: { readOnlyHint: true }

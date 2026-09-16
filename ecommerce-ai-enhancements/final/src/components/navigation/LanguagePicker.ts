@@ -53,6 +53,7 @@ export class LanguagePicker extends HTMLElement {
     document.modelContext.registerTool(
       {
         name: 'switch_language',
+        title: 'Change Language',
         description:
           "Switch the application's active language and document direction (LTR/RTL) using Chrome's built-in Translator API. Re-translates all visible UI components and formats numbers and currency according to the selected language locale. Use this tool when the user requests a language switch or prefers a different language.",
         inputSchema: {

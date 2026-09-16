@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "devDependencies": {
-    "@types/dom-chromium-ai": "^0.0.17",
+    "@typescript/lib-dom": "npm:modern-web-types@^0.5.0",
     "typescript": "~6.0.2",
     "vite": "^8.2.2",
     "webmcp-types": "^0.1.6"

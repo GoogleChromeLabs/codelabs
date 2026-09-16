@@ -44,6 +44,7 @@ export class ActivityFacet extends BaseListFacet {
       document.modelContext.registerTool(
         {
           name: 'activity_filter',
+          title: 'Filter by Activity',
           description:
             'Inspect available outdoor activities with their matching product counts and active selection states, or toggle a specific activity filter on the catalog page. Use this tool to filter the catalog for adventures like "Backpacking", "Camping", "Hiking", "Mountaineering", "Paddling", or "Trail Running".',
           inputSchema: {

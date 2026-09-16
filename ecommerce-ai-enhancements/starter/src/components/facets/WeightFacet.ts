@@ -45,6 +45,7 @@ export class WeightFacet extends BaseListFacet {
      *
      * Tool specification:
      * - name: 'weight_filter'
+     * - title: 'Filter by Weight Range'
      * - description: Inspect available weight brackets or toggle a weight bracket filter.
      * - inputSchema: {
      *     type: 'object',

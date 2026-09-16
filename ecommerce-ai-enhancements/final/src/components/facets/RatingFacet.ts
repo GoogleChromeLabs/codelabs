@@ -44,6 +44,7 @@ export class RatingFacet extends BaseListFacet {
       document.modelContext.registerTool(
         {
           name: 'rating_filter',
+          title: 'Filter by Customer Rating',
           description:
             'Inspect available customer rating thresholds (\'3.0\', \'4.0\', \'4.8\') with matching product counts and active states, or toggle a minimum rating filter on the catalog page. Use this tool when the user wants to see highly rated or top-reviewed gear.',
           inputSchema: {
