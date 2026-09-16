@@ -148,7 +148,7 @@ async function applyFacetsViaWebMCP(
   const appliedFilters: SemanticFilterResult['appliedFilters'] = {};
   const toolsExecuted: string[] = [];
 
-  if (typeof document === 'undefined' || !document.modelContext?.getTools) {
+  if (!document.modelContext?.getTools) {
     return { appliedFilters, toolsExecuted };
   }
 
@@ -288,10 +288,7 @@ export async function interpretAndApplySemanticFilter(searchTerm: string): Promi
   const { appliedFilters, toolsExecuted } = await applyFacetsViaWebMCP(searchTerm, parsed);
   const t3 = performance.now();
 
-  const catalogView =
-    typeof document !== 'undefined'
-      ? document.querySelector<HTMLElement & { getFilteredProducts?: () => readonly Product[] }>('catalog-view')
-      : null;
+  const catalogView = document.querySelector<HTMLElement & { getFilteredProducts?: () => readonly Product[] }>('catalog-view');
   const matchingProducts = catalogView?.getFilteredProducts ? catalogView.getFilteredProducts() : [];
 
   logSemanticSearchTrace({
@@ -319,7 +316,7 @@ export async function interpretAndApplySemanticFilter(searchTerm: string): Promi
 }
 
 export function registerCatalogSemanticFilterTool(signal?: AbortSignal): void {
-  if (typeof document === 'undefined' || !document.modelContext?.registerTool) return;
+  if (!document.modelContext?.registerTool) return;
 
   try {
     document.modelContext.registerTool({

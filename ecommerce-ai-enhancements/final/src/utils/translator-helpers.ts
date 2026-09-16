@@ -83,7 +83,6 @@ export function getLanguageOption(code: SupportedLanguage = activeLanguage): Lan
 }
 
 function updateDocumentAttributes(): void {
-  if (typeof document === 'undefined') return;
   const opt = getLanguageOption(activeLanguage);
   document.documentElement.lang = opt.code;
   document.documentElement.dir = opt.dir;

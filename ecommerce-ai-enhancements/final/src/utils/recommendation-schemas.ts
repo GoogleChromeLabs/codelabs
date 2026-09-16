@@ -30,7 +30,7 @@ import {
   type WeatherCondition,
   type Product,
 } from '../catalog/dataset.ts';
-import { PRICE_RANGES, WEIGHT_RANGES, RATING_TIERS } from '../utils/filter-helpers.ts';
+import { PRICE_RANGES, WEIGHT_RANGES, RATING_TIERS } from './filter-helpers.ts';
 
 export type PriceRange = (typeof PRICE_RANGES)[number];
 export type WeightRange = (typeof WEIGHT_RANGES)[number];

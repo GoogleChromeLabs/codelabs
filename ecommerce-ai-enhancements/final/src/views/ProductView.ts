@@ -220,7 +220,7 @@ export class ProductView extends HTMLElement {
   }
 
   private registerWebMCPTools(): void {
-    if (typeof document === 'undefined' || !document.modelContext?.registerTool || !this.product) return;
+    if (!document.modelContext?.registerTool || !this.product) return;
     this.toolAbortController?.abort();
     this.toolAbortController = new AbortController();
     const signal = this.toolAbortController.signal;

@@ -50,7 +50,7 @@ export class SearchFacet extends HTMLElement {
   }
 
   private registerWebMCPTools(): void {
-    if (typeof document === 'undefined' || !document.modelContext?.registerTool) return;
+    if (!document.modelContext?.registerTool) return;
     this.toolAbortController?.abort();
     this.toolAbortController = new AbortController();
     const signal = this.toolAbortController.signal;
