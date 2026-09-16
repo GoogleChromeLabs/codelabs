@@ -15,23 +15,10 @@
  * limitations under the License.
  */
 
-/**
- * JSON Schema documents used as `responseConstraint` values for
- * `LanguageModel.prompt()`.
- *
- * The Prompt API performs constrained decoding against these schemas, so the
- * model can only emit tokens that produce a conforming JSON document. That
- * means `JSON.parse()` is the only post-processing we ever need: no regexes, no
- * fuzzy string matching, and no "did the model actually return a real category?"
- * validation passes.
- *
- * Every schema below binds its `enum` values to the same domain constants the
- * rest of the app uses, so the model is structurally incapable of inventing a
- * category, activity, condition, facet bracket, or product ID that the catalog
- * doesn't have.
- *
- * @see https://developer.mozilla.org/en-US/docs/Web/API/LanguageModel/prompt#responseconstraint
- * @see https://json-schema.org/understanding-json-schema/reference
+/*
+ * JSON Schema documents used as `responseConstraint` values for `LanguageModel.prompt()`.
+ * Every schema binds its `enum` values to the catalog's own domain constants.
+ * https://json-schema.org/understanding-json-schema/reference
  */
 
 import {
@@ -48,16 +35,11 @@ export type PriceRange = (typeof PRICE_RANGES)[number];
 export type WeightRange = (typeof WEIGHT_RANGES)[number];
 export type RatingTier = (typeof RATING_TIERS)[number];
 
-/** JSON Schema dialect these documents are authored against. */
+// JSON Schema dialect these documents are authored against.
 const JSON_SCHEMA_DIALECT = 'https://json-schema.org/draft/2020-12/schema';
 
 /**
  * Builds a subschema for a value that is either one of `values` or `null`.
- *
- * `anyOf` composition is the canonical JSON Schema way to express "this enum,
- * or explicitly nothing". Keeping the property `required` (rather than optional)
- * forces the model to make a deliberate decision instead of silently omitting
- * the key.
  */
 function nullableEnum(values: readonly string[], description: string): Record<string, unknown> {
   return {
@@ -66,7 +48,7 @@ function nullableEnum(values: readonly string[], description: string): Record<st
   };
 }
 
-/** Shape of a `journeyProfileSchema`-constrained response. */
+// Shape of a `journeyProfileSchema`-constrained response.
 export interface JourneyProfileResponse {
   readonly primaryActivity: ActivityType;
   readonly impliedConditions: WeatherCondition[];
@@ -105,21 +87,13 @@ export const journeyProfileSchema = {
   additionalProperties: false,
 };
 
-/** Shape of a `createRankedProductIdsSchema()`-constrained response. */
+// Shape of a `createRankedProductIdsSchema()`-constrained response.
 export interface RankedProductIdsResponse {
   readonly rankedProductIds: string[];
 }
 
 /**
- * Builds a re-ranking schema whose `enum` is the exact set of candidate product
- * IDs for this request.
- *
- * Because the enum is generated per call, the model can only return IDs that
- * exist in the candidate list — hallucinated or truncated IDs are impossible,
- * so the caller can map straight from ID to `Product`.
- *
- * @param candidateIds Catalog IDs the model is allowed to choose from.
- * @param maxItems Maximum number of ranked IDs to return.
+ * Builds a re-ranking schema whose `enum` is the exact set of candidate product IDs for this request.
  */
 export function createRankedProductIdsSchema(
   candidateIds: readonly string[],
@@ -145,7 +119,7 @@ export function createRankedProductIdsSchema(
   };
 }
 
-/** Shape of a `semanticFilterSchema`-constrained response. */
+// Shape of a `semanticFilterSchema`-constrained response.
 export interface SemanticFilterResponse {
   readonly category: ProductCategory | null;
   readonly activity: ActivityType | null;

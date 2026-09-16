@@ -15,7 +15,8 @@
  * limitations under the License.
  */
 
-import { inferJourneyProfile, type ProfilerInputContext } from './journey-profiler.ts';
+import { inferJourneyProfile } from './journey-profiler.ts';
+import type { ProfilerInputContext } from './journey-helpers.ts';
 import { catalogApi } from '../catalog/catalog-api.ts';
 import { rankComplementaryGear, type RecommendedItem } from './synergy-reranker.ts';
 import { logDevToolsTrace } from '../observability/devtools-trace.ts';
@@ -81,63 +82,68 @@ export class RecommendationCoordinator {
       return results.slice(0, limit);
     }
 
-    const pipelinePromise = (async () => {
-      const totalStartTime = performance.now();
-      try {
-        // Step 1: AI Journey Profiler (Infers intent from full chronological timeline)
-        const step1Start = performance.now();
-        const profile = await inferJourneyProfile(fullContext, catalogMap);
-        const step1DurationMs = performance.now() - step1Start;
-
-        const currentProd = fullContext.currentProductId ? catalogMap.get(fullContext.currentProductId) : null;
-        const cartProds = fullContext.cart.map(c => catalogMap.get(c.productId)).filter(Boolean) as Product[];
-
-        // Step 2: Candidate Query (fetch('/api/catalog/search?...'))
-        const step2Start = performance.now();
-        const candidates = await catalogApi.queryCandidates({
-          categories: profile.targetCategories,
-          activity: profile.primaryActivity,
-          excludeProductIds: [
-            ...(fullContext.currentProductId ? [fullContext.currentProductId] : []),
-            ...fullContext.cart.map(c => c.productId),
-          ],
-          limit: 20,
-        });
-        const step2DurationMs = performance.now() - step2Start;
-
-        // Step 3: AI Synergy Re-Ranker (LanguageModel + candidate-constrained JSON Schema)
-        const step3Start = performance.now();
-        const recommendations = await rankComplementaryGear(profile, candidates, currentProd, cartProds, 5);
-        const step3DurationMs = performance.now() - step3Start;
-
-        const totalDurationMs = performance.now() - totalStartTime;
-
-        // Store into reload-surviving persistent cache
-        await persistentCache.set('ai_cache', cacheKey, recommendations);
-
-        // Observability: Log structured DevTools trace with timing breakdown
-        logDevToolsTrace({
-          context: fullContext,
-          profile,
-          candidates,
-          recommendations,
-          timings: {
-            step1DurationMs,
-            step2DurationMs,
-            step3DurationMs,
-            totalDurationMs,
-          },
-        });
-
-        return recommendations;
-      } finally {
-        this.inFlight.delete(cacheKey);
-      }
-    })();
+    const pipelinePromise = this.runPipeline(cacheKey, fullContext, catalogMap).finally(() => {
+      this.inFlight.delete(cacheKey);
+    });
 
     this.inFlight.set(cacheKey, pipelinePromise);
     const resolved = await pipelinePromise;
     return resolved.slice(0, limit);
+  }
+
+  private async runPipeline(
+    cacheKey: string,
+    fullContext: ProfilerInputContext,
+    catalogMap: ReadonlyMap<string, Product>
+  ): Promise<readonly RecommendedItem[]> {
+    const totalStartTime = performance.now();
+
+    // Step 1: AI Journey Profiler (Infers intent from full chronological timeline)
+    const step1Start = performance.now();
+    const profile = await inferJourneyProfile(fullContext, catalogMap);
+    const step1DurationMs = performance.now() - step1Start;
+
+    const currentProd = fullContext.currentProductId ? catalogMap.get(fullContext.currentProductId) : null;
+    const cartProds = fullContext.cart.map(c => catalogMap.get(c.productId)).filter(Boolean) as Product[];
+
+    // Step 2: Candidate Query (fetch('/api/catalog/search?...'))
+    const step2Start = performance.now();
+    const candidates = await catalogApi.queryCandidates({
+      categories: profile.targetCategories,
+      activity: profile.primaryActivity,
+      excludeProductIds: [
+        ...(fullContext.currentProductId ? [fullContext.currentProductId] : []),
+        ...fullContext.cart.map(c => c.productId),
+      ],
+      limit: 20,
+    });
+    const step2DurationMs = performance.now() - step2Start;
+
+    // Step 3: AI Synergy Re-Ranker (LanguageModel + candidate-constrained JSON Schema)
+    const step3Start = performance.now();
+    const recommendations = await rankComplementaryGear(profile, candidates, currentProd, cartProds, 5);
+    const step3DurationMs = performance.now() - step3Start;
+
+    const totalDurationMs = performance.now() - totalStartTime;
+
+    // Store into reload-surviving persistent cache
+    await persistentCache.set('ai_cache', cacheKey, recommendations);
+
+    // Observability: Log structured DevTools trace with timing breakdown
+    logDevToolsTrace({
+      context: fullContext,
+      profile,
+      candidates,
+      recommendations,
+      timings: {
+        step1DurationMs,
+        step2DurationMs,
+        step3DurationMs,
+        totalDurationMs,
+      },
+    });
+
+    return recommendations;
   }
 }
 
