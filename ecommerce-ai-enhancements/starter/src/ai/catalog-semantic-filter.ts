@@ -64,16 +64,25 @@ export interface SemanticFilterResult {
   readonly toolsExecuted: string[];
 }
 
+/**
+ * Holds the session created by prewarmSemanticFilterSession() until the search
+ * that follows claims it.
+ */
+let warmSession: LanguageModel | null = null;
+
 export async function prewarmSemanticFilterSession(): Promise<void> {
   /*
-   * TODO: Prewarm the Prompt API session for the semantic catalog filter.
+   * TODO: Create the search session before the shopper finishes typing.
    *
    * When implemented:
-   * Call prewarmPromptSession(SEMANTIC_FILTER_SYSTEM_PROMPT), which creates a
-   * base session with the system instructions in `initialPrompts` so the first
-   * real search doesn't pay the cold-start cost. Trigger it from a user
-   * interaction (focusing the search box): LanguageModel.create() requires
-   * transient activation.
+   * If warmSession is already set, return. Otherwise call
+   * getPromptSession(SEMANTIC_FILTER_SYSTEM_PROMPT) — the helper you wrote in
+   * src/ai/prompt-api.ts — and store the result in warmSession so the search
+   * below can use that exact instance.
+   *
+   * Wrap it in try/catch: prewarming is best effort, and the real search will
+   * surface any error. Trigger it from a user interaction (focusing the search
+   * box): LanguageModel.create() requires transient activation.
    */
 }
 
@@ -89,8 +98,11 @@ export async function interpretAndApplySemanticFilter(searchTerm: string): Promi
    *    (e.g., persistentCache.get('ai_cache', 'latest_journey_profile')) to maintain
    *    continuity between browsing journey intent and search results.
    *
-   * 2. Obtain a Prompt API session using SEMANTIC_FILTER_SYSTEM_PROMPT:
-   *    const session = await getPromptSession(SEMANTIC_FILTER_SYSTEM_PROMPT);
+   * 2. Claim the session prewarming created, falling back to a new one if the
+   *    shopper never focused the search box. Clear the slot either way — the
+   *    session is single-use, so the next query starts with clean history:
+   *      const session = warmSession ?? (await getPromptSession(SEMANTIC_FILTER_SYSTEM_PROMPT));
+   *      warmSession = null;
    *
    * 3. Construct prompt combining the natural language query and journey context:
    *    - Analyze query for category, activity, conditions, price constraints, weight constraints, rating, and keyword.
@@ -143,6 +155,7 @@ export function registerCatalogSemanticFilterTool(signal?: AbortSignal): void {
    *
    * When WebMCP is available (document.modelContext?.registerTool):
    * Register a tool named 'semantic_catalog_filter':
+   * - title: 'Search the Catalog in Plain Language'
    * - description: Search and filter the catalog using natural language.
    * - inputSchema: { type: 'object', properties: { query: { type: 'string' } }, required: ['query'] }
    * - execute: async (input) => {

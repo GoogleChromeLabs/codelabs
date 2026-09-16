@@ -73,16 +73,10 @@ export async function rankComplementaryGear(
    * Docs: https://developer.mozilla.org/en-US/docs/Web/API/LanguageModel/prompt
    *
    * Expected Implementation:
-   * 1. Obtain a Prompt API session carrying the re-ranker system instructions.
-   *    System instructions go in `initialPrompts` at creation time:
+   * 1. Obtain a Prompt API session carrying the re-ranker system instructions,
+   *    using the helper you implemented in src/ai/prompt-api.ts:
    *
-   *    const session = await LanguageModel.create({
-   *      initialPrompts: [{ role: 'system', content: RE_RANKER_SYSTEM_PROMPT }],
-   *      expectedInputs: [{ type: 'text', languages: ['en'] }],
-   *      expectedOutputs: [{ type: 'text', languages: ['en'] }],
-   *    });
-   *
-   *    // Or use the shared helper: const session = await getPromptSession(RE_RANKER_SYSTEM_PROMPT);
+   *    const session = await getPromptSession(RE_RANKER_SYSTEM_PROMPT);
    *
    * 2. Format the candidate gear, active product, and cart contents into the prompt text:
    *    - Current product details (name, category, activity, conditions)

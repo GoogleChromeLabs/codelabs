@@ -22,7 +22,7 @@ import {
   type WeightRange,
   type RatingTier,
 } from './recommendation-schemas.ts';
-import { getPromptSession, prewarmPromptSession } from './prompt-api.ts';
+import { getPromptSession } from './prompt-api.ts';
 import { logSemanticSearchTrace } from '../observability/devtools-trace.ts';
 import { persistentCache } from '../utils/persistent-cache.ts';
 import {
@@ -72,8 +72,28 @@ export interface SemanticFilterResult {
   readonly toolsExecuted: string[];
 }
 
+/**
+ * Holds the session created by {@link prewarmSemanticFilterSession} until the
+ * search that follows claims it. Single-use: once a search takes it, the next
+ * prewarm creates a fresh one so queries never inherit each other's history.
+ */
+let warmSession: LanguageModel | null = null;
+
+/**
+ * Creates the search session ahead of the query the shopper is about to type.
+ *
+ * Call this the moment intent is clear — a focused search box — so the cold
+ * start overlaps their typing. `LanguageModel.create()` requires transient
+ * activation, so this must run from a user interaction.
+ */
 export async function prewarmSemanticFilterSession(): Promise<void> {
-  await prewarmPromptSession(SEMANTIC_FILTER_SYSTEM_PROMPT);
+  if (warmSession) return;
+  try {
+    warmSession = await getPromptSession(SEMANTIC_FILTER_SYSTEM_PROMPT);
+  } catch {
+    // Best effort: if this fails, the search creates its own session and
+    // surfaces the error there.
+  }
 }
 
 export async function interpretAndApplySemanticFilter(searchTerm: string): Promise<SemanticFilterResult> {
@@ -97,7 +117,10 @@ export async function interpretAndApplySemanticFilter(searchTerm: string): Promi
       ? `Primary Activity: ${cachedJourney.primaryActivity} | Target Categories: ${(cachedJourney.targetCategories || []).join(', ')} | Implied Conditions: ${(cachedJourney.impliedConditions || []).join(', ')}`
       : 'No prior journey profile recorded.';
 
-    const session = await getPromptSession(SEMANTIC_FILTER_SYSTEM_PROMPT);
+    // Claim the prewarmed session if the shopper's focus created one; otherwise
+    // create it now. Either way it's single-use, so clear the slot.
+    const session = warmSession ?? (await getPromptSession(SEMANTIC_FILTER_SYSTEM_PROMPT));
+    warmSession = null;
     const promptText = `
 NATURAL LANGUAGE SEARCH QUERY: "${searchTerm}"
 
