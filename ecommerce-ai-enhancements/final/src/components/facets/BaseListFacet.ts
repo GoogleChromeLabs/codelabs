@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { translator } from '../../ai/translator.ts';
+import { translator } from '../../ai/translator-helpers.ts';
 import { formatNumber } from '../../utils/formatters.ts';
 
 export interface FacetItemData {

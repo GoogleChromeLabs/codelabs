@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { translator } from '../../ai/translator.ts';
+import { translator } from '../../ai/translator-helpers.ts';
 
 export class BreadcrumbsNav extends HTMLElement {
   private unsubscribeLang: (() => void) | null = null;

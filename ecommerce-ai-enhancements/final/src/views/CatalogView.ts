@@ -26,7 +26,7 @@ import {
 } from '../utils/filter-helpers.ts';
 import { FacetSidebar } from '../components/facets/FacetSidebar.ts';
 import { historyStore } from '../state/history-store.ts';
-import { translator } from '../ai/translator.ts';
+import { translator } from '../ai/translator-helpers.ts';
 import { formatNumber } from '../utils/formatters.ts';
 import { registerCatalogSemanticFilterTool, interpretAndApplySemanticFilter, prewarmSemanticFilterSession } from '../ai/catalog-semantic-filter.ts';
 import { ProductCard } from '../components/product/ProductCard.ts';

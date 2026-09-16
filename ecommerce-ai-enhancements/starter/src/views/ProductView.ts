@@ -19,7 +19,7 @@ import { catalogApi } from '../catalog/catalog-api.ts';
 import type { Product } from '../catalog/dataset.ts';
 import { cartStore } from '../state/cart-store.ts';
 import { historyStore } from '../state/history-store.ts';
-import { translator } from '../ai/translator.ts';
+import { translator } from '../ai/translator-helpers.ts';
 import { formatCAD, formatNumber, formatRatingStars } from '../utils/formatters.ts';
 import '../components/navigation/BreadcrumbsNav.ts';
 import { SpecsTable } from '../components/product/SpecsTable.ts';

@@ -20,7 +20,7 @@ import {
   SUPPORTED_LANGUAGES,
   SUPPORTED_LANGUAGE_CODES,
   type SupportedLanguage,
-} from '../../ai/translator.ts';
+} from '../../ai/translator-helpers.ts';
 
 export class LanguagePicker extends HTMLElement {
   private unsubscribe: (() => void) | null = null;

@@ -19,7 +19,7 @@ import {
   translator,
   SUPPORTED_LANGUAGES,
   type SupportedLanguage,
-} from '../../ai/translator.ts';
+} from '../../ai/translator-helpers.ts';
 
 export class LanguagePicker extends HTMLElement {
   private unsubscribe: (() => void) | null = null;
