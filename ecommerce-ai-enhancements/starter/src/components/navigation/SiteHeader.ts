@@ -17,7 +17,7 @@
 
 import { ACTIVITIES, type ActivityType } from '../../catalog/dataset.ts';
 import { cartStore } from '../../state/cart-store.ts';
-import { translator } from '../../ai/translator-helpers.ts';
+import { translator } from '../../utils/translator-helpers.ts';
 import { formatNumber } from '../../utils/formatters.ts';
 import { navigateTo } from '../../utils/router.ts';
 import { prewarmSemanticFilterSession } from '../../ai/catalog-semantic-filter.ts';

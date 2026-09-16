@@ -18,7 +18,7 @@
 import type { Product } from '../../catalog/dataset.ts';
 import { cartStore } from '../../state/cart-store.ts';
 import { formatCAD } from '../../utils/formatters.ts';
-import { translator } from '../../ai/translator-helpers.ts';
+import { translator } from '../../utils/translator-helpers.ts';
 
 export class ProductCard extends HTMLElement {
   private product: Product | null = null;

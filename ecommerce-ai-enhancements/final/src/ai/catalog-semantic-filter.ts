@@ -23,7 +23,7 @@ import {
   type RatingTier,
 } from './recommendation-schemas.ts';
 import { getPromptSession } from './prompt-api.ts';
-import type { JourneyProfile } from './journey-helpers.ts';
+import type { JourneyProfile } from '../utils/journey-helpers.ts';
 import type { Product } from '../catalog/dataset.ts';
 import { logSemanticSearchTrace } from '../observability/devtools-trace.ts';
 import { persistentCache } from '../utils/persistent-cache.ts';

@@ -21,7 +21,7 @@ import {
   formatShopperJourney,
   type JourneyProfile,
   type ProfilerInputContext,
-} from './journey-helpers.ts';
+} from '../utils/journey-helpers.ts';
 import type { Product } from '../catalog/dataset.ts';
 
 export async function inferJourneyProfile(

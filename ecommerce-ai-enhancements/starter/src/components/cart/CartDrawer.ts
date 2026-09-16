@@ -19,7 +19,7 @@ import { cartStore } from '../../state/cart-store.ts';
 import { recommendationStore } from '../../state/recommendation-store.ts';
 import { CATALOG, type Product } from '../../catalog/dataset.ts';
 import { formatCAD, formatNumber } from '../../utils/formatters.ts';
-import { translator } from '../../ai/translator-helpers.ts';
+import { translator } from '../../utils/translator-helpers.ts';
 import type { RecommendedItem } from '../../ai/synergy-reranker.ts';
 
 export class CartDrawer extends HTMLElement {

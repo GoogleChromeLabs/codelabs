@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import type { JourneyProfile, ProfilerInputContext } from '../ai/journey-helpers.ts';
+import type { JourneyProfile, ProfilerInputContext } from '../utils/journey-helpers.ts';
 import type { RecommendedItem } from '../ai/synergy-reranker.ts';
 import type { Product } from '../catalog/dataset.ts';
 import type { SemanticFilterResult } from '../ai/catalog-semantic-filter.ts';

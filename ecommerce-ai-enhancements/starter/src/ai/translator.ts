@@ -19,7 +19,7 @@ import { modelStatusStore } from '../state/model-status-store.ts';
 import {
   type SupportedLanguage,
   getCachedTranslator,
-} from './translator-helpers.ts';
+} from '../utils/translator-helpers.ts';
 
 /**
  * Creates an on-device `Translator` session for the given target language.

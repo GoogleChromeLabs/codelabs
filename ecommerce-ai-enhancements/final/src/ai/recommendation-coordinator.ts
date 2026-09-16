@@ -16,7 +16,7 @@
  */
 
 import { inferJourneyProfile } from './journey-profiler.ts';
-import type { ProfilerInputContext } from './journey-helpers.ts';
+import type { ProfilerInputContext } from '../utils/journey-helpers.ts';
 import { catalogApi } from '../catalog/catalog-api.ts';
 import { rankComplementaryGear, type RecommendedItem } from './synergy-reranker.ts';
 import { logDevToolsTrace } from '../observability/devtools-trace.ts';

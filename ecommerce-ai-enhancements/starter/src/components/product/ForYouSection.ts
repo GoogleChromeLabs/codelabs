@@ -17,7 +17,7 @@
 
 import { recommendationStore } from '../../state/recommendation-store.ts';
 import type { RecommendedItem } from '../../ai/synergy-reranker.ts';
-import { translator } from '../../ai/translator-helpers.ts';
+import { translator } from '../../utils/translator-helpers.ts';
 import { ProductCard } from './ProductCard.ts';
 
 export class ForYouSection extends HTMLElement {

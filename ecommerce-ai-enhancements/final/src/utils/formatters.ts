@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { translator, type SupportedLanguage } from '../ai/translator-helpers.ts';
+import { translator, type SupportedLanguage } from './translator-helpers.ts';
 
 const LOCALE_MAP: Record<SupportedLanguage, string> = {
   en: 'en-CA',

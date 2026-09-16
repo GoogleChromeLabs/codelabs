@@ -16,7 +16,7 @@
  */
 
 import { CATALOG, ACTIVITIES, type Product } from '../catalog/dataset.ts';
-import { translator } from '../ai/translator-helpers.ts';
+import { translator } from '../utils/translator-helpers.ts';
 import { formatNumber } from '../utils/formatters.ts';
 import { ProductCard } from '../components/product/ProductCard.ts';
 

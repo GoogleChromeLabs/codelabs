@@ -16,8 +16,8 @@
  */
 
 import { modelStatusStore } from '../state/model-status-store.ts';
-import { persistentCache } from '../utils/persistent-cache.ts';
-import { createTranslator, translate } from './translator.ts';
+import { persistentCache } from './persistent-cache.ts';
+import { createTranslator, translate } from '../ai/translator.ts';
 
 export type SupportedLanguage =
   | 'en'

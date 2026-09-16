@@ -17,7 +17,7 @@
 
 import type { Product } from '../catalog/dataset.ts';
 import type { JourneyProfile } from './journey-helpers.ts';
-import type { RankedProductIdsResponse } from './recommendation-schemas.ts';
+import type { RankedProductIdsResponse } from '../ai/recommendation-schemas.ts';
 
 export interface RecommendedItem {
   readonly product: Product;

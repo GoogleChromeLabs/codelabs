@@ -17,7 +17,7 @@
 
 import type { Product } from '../../catalog/dataset.ts';
 import { formatGrams } from '../../utils/formatters.ts';
-import { translator } from '../../ai/translator-helpers.ts';
+import { translator } from '../../utils/translator-helpers.ts';
 
 export class SpecsTable extends HTMLElement {
   private product: Product | null = null;

@@ -16,7 +16,7 @@
  */
 
 import type { FacetItemData } from './BaseListFacet.ts';
-import { translator } from '../../ai/translator-helpers.ts';
+import { translator } from '../../utils/translator-helpers.ts';
 import { formatNumber } from '../../utils/formatters.ts';
 import { CONDITIONS } from '../../catalog/dataset.ts';
 

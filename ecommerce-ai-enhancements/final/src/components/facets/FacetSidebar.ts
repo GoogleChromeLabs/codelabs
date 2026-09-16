@@ -30,7 +30,7 @@ import type { ConditionFacet } from './ConditionFacet.ts';
 import type { WeightFacet } from './WeightFacet.ts';
 import type { PriceFacet } from './PriceFacet.ts';
 import type { RatingFacet } from './RatingFacet.ts';
-import { translator } from '../../ai/translator-helpers.ts';
+import { translator } from '../../utils/translator-helpers.ts';
 
 export interface FacetSidebarData {
   searchQuery: string;
