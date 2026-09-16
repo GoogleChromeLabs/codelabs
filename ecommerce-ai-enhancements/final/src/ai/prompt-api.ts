@@ -15,105 +15,29 @@
  * limitations under the License.
  */
 
-/**
- * Shared Prompt API session management.
- *
- * @see https://developer.mozilla.org/en-US/docs/Web/API/Prompt_API
- * @see https://developer.mozilla.org/en-US/docs/Web/API/LanguageModel
- */
-
 import { modelStatusStore } from '../state/model-status-store.ts';
 
-/**
- * Declaring the modalities and languages we actually use lets the user agent
- * pick the right model components, and lets `availability()` tell us up front
- * whether this exact configuration is supported.
- *
- * Note the shape: an array of `{ type, languages }` objects. There is no
- * `expectedInputLanguages`, `expectedOutputLanguages`, or `outputLanguage`
- * option on `LanguageModel` — those belong to the Summarizer/Writer/Rewriter
- * APIs, and are silently ignored here.
- */
-const EXPECTED_INPUTS: LanguageModelExpected[] = [{ type: 'text', languages: ['en'] }];
-const EXPECTED_OUTPUTS: LanguageModelExpected[] = [{ type: 'text', languages: ['en'] }];
-
-/**
- * Base sessions, keyed by system prompt.
- *
- * A base session holds nothing but its system instructions, so cloning it for
- * each task skips re-parsing those instructions and guarantees that unrelated
- * tasks never inherit each other's conversation history.
- */
+// Base sessions, keyed by System Prompt
 const baseSessions = new Map<string, LanguageModel>();
-
-/** Error thrown when the on-device model can't serve this configuration. */
-export class PromptApiUnavailableError extends Error {
-  readonly availability: Availability | 'unsupported';
-
-  constructor(availability: Availability | 'unsupported') {
-    super(
-      availability === 'unsupported'
-        ? 'This browser does not implement the Prompt API.'
-        : `The language model is ${availability} for the requested configuration.`
-    );
-    this.name = 'PromptApiUnavailableError';
-    this.availability = availability;
-  }
-}
-
-/** Feature detection for the Prompt API. */
-export function isPromptApiSupported(): boolean {
-  return 'LanguageModel' in self;
-}
-
-/**
- * Reports whether the model can serve our configuration, without creating a
- * session or starting a download.
- *
- * @returns `'available'`, `'downloadable'`, `'downloading'`, or `'unavailable'`.
- */
-export async function getPromptApiAvailability(): Promise<Availability> {
-  if (!isPromptApiSupported()) return 'unavailable';
-  return LanguageModel.availability({
-    expectedInputs: EXPECTED_INPUTS,
-    expectedOutputs: EXPECTED_OUTPUTS,
-  });
-}
-
-/**
- * Surfaces model download progress in the UI.
- *
- * `downloadprogress` is typed as `ProgressEvent<CreateMonitor>` via
- * `CreateMonitorEventMap`, so `event` needs no annotation. Its `loaded` is a
- * fraction between 0 and 1, so it is scaled rather than divided by `total`.
- */
-function monitorDownload(monitor: CreateMonitor): void {
-  monitor.addEventListener('downloadprogress', event => {
-    const percent = Math.round(event.loaded * 100);
-    if (percent >= 100) {
-      modelStatusStore.reset();
-      return;
-    }
-    modelStatusStore.setDownloading('Gemini Nano', percent);
-  });
-}
 
 /**
  * Returns a ready-to-prompt session carrying the given system instructions.
  *
- * The returned session is a clone, so callers can `destroy()` it freely without
- * throwing away the cached base session.
+ * The returned session is always a clone, so callers can `destroy()` it freely
+ * without throwing away the cached base session.
  *
  * @param systemPrompt System instructions for the session. Passed through
  *   `initialPrompts` as a `system` message — this is the only way to set system
  *   instructions, and it must happen at creation time.
  * @param options.signal Aborts session creation.
- * @throws {PromptApiUnavailableError} When the model cannot serve this configuration.
+ * @throws When the browser has no Prompt API, or the model cannot serve this
+ *   configuration.
  */
 export async function getPromptSession(
   systemPrompt: string = '',
   options: { signal?: AbortSignal } = {}
 ): Promise<LanguageModel> {
+  // Memoize the sessions, returning a clone with a new signal if one exists
   const base = baseSessions.get(systemPrompt);
   if (base) {
     try {
@@ -124,31 +48,52 @@ export async function getPromptSession(
     }
   }
 
-  if (!isPromptApiSupported()) {
-    throw new PromptApiUnavailableError('unsupported');
+  // Check to see if the Prompt API is available
+  if (!('LanguageModel' in self)) {
+    throw new Error('This browser does not implement the Prompt API.');
   }
 
-  const availability = await getPromptApiAvailability();
+  // Declare the expected inputs and outputs for the model we want to use
+  const expectedInputs: LanguageModelExpected[] = [{ type: 'text', languages: ['en'] }];
+  const expectedOutputs: LanguageModelExpected[] = [{ type: 'text', languages: ['en'] }];
+
+  // Check the model's availability
+  const availability = await LanguageModel.availability({ expectedInputs, expectedOutputs });
   if (availability === 'unavailable') {
-    throw new PromptApiUnavailableError(availability);
+    throw new Error('The language model is unavailable for the requested configuration.');
   }
 
+  // Build initial Language Model options
   const createOptions: LanguageModelCreateOptions = {
-    expectedInputs: EXPECTED_INPUTS,
-    expectedOutputs: EXPECTED_OUTPUTS,
+    expectedInputs,
+    expectedOutputs,
     signal: options.signal,
   };
 
+  // Add in the system prompt, if there is one
   if (systemPrompt) {
     createOptions.initialPrompts = [{ role: 'system', content: systemPrompt }];
   }
 
-  // The model only downloads once, and only `create()` can start it.
+  // Check if the model is available and, if not, download the model
   if (availability !== 'available') {
-    modelStatusStore.setDownloading('Gemini Nano', 0);
-    createOptions.monitor = monitorDownload;
+    // Update UI
+    modelStatusStore.setDownloading('Local AI Model', 0);
+
+    // Monitor download progress
+    createOptions.monitor = monitor => {
+      monitor.addEventListener('downloadprogress', event => {
+        const percent = Math.round(event.loaded * 100);
+        if (percent >= 100) {
+          modelStatusStore.reset();
+          return;
+        }
+        modelStatusStore.setDownloading('Local AI Model', percent);
+      });
+    };
   }
 
+  // Add the session to the memoized cache, then return a clone.
   try {
     const newBase = await LanguageModel.create(createOptions);
     baseSessions.set(systemPrompt, newBase);
@@ -167,7 +112,7 @@ export async function getPromptSession(
  * interaction.
  */
 export async function prewarmPromptSession(systemPrompt: string = ''): Promise<void> {
-  if (!isPromptApiSupported()) return;
+  if (!('LanguageModel' in self)) return;
   try {
     // Only the base session is kept; the clone exists purely to force creation.
     const session = await getPromptSession(systemPrompt);
@@ -175,12 +120,4 @@ export async function prewarmPromptSession(systemPrompt: string = ''): Promise<v
   } catch {
     // Pre-warming is best effort: the real call will surface any error.
   }
-}
-
-/** Destroys every cached base session and frees the model's memory. */
-export function destroyPromptSessions(): void {
-  for (const session of baseSessions.values()) {
-    session.destroy();
-  }
-  baseSessions.clear();
 }
