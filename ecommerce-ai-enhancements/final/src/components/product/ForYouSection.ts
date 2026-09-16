@@ -74,11 +74,11 @@ export class ForYouSection extends HTMLElement {
   }
 
   private registerWebMCPTools(): void {
-    // Test to see if WebMCP is supported
+    // 2.1.1 Test to see if WebMCP is supported
     if (!document.modelContext?.registerTool) return;
 
     try {
-      // Register the `get_recommendations` tool
+      // 2.1.2 Register the `get_recommendations` tool
       document.modelContext.registerTool({
         name: 'get_recommendations',
         title: 'Get Recommended Products',

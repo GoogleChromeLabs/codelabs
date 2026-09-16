@@ -18,7 +18,7 @@
 import type { FacetItemData } from './BaseListFacet.ts';
 import { translator } from '../../utils/translator-helpers.ts';
 import { formatNumber } from '../../utils/formatters.ts';
-import { CONDITIONS } from '../../catalog/dataset.ts';
+import { conditionFilterSchema } from '../../utils/filter-schemas.ts';
 
 export class ConditionFacet extends HTMLElement {
   private items: readonly FacetItemData[] = [];
@@ -54,41 +54,32 @@ export class ConditionFacet extends HTMLElement {
     this.unsubscribeLang = null;
   }
 
+  public filterCondition(condition?: string, selected?: boolean) {
+    if (condition) {
+      this.handleToggle(condition, selected);
+    }
+    return {
+      conditions: this.items.map(i => ({
+        condition: i.id,
+        label: i.label,
+        count: i.count,
+        selected: i.checked,
+      })),
+    };
+  }
+
   private registerWebMCPTools(): void {
     if (!document.modelContext?.registerTool) return;
 
     try {
+      // 3.1.3 Register the 'condition_filter' tool
       document.modelContext.registerTool({
         name: 'condition_filter',
         title: 'Filter by Weather Condition',
         description: 'Inspect available environmental conditions with their matching product counts and active selection states, or toggle a condition filter on the catalog page. Use this tool to find gear certified for conditions like "Rain", "Snow", "Sub-Zero", "High Wind", "Extreme Cold", or "4-Season".',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            condition: {
-              type: 'string',
-              enum: CONDITIONS,
-              description: 'Condition to filter by. Omit to view current conditions and counts without changing.',
-            },
-            selected: {
-              type: 'boolean',
-              description: 'Explicit selection state: true to select, false to deselect. If omitted, toggles.',
-            },
-          },
-        },
-        execute: (input: { condition?: string; selected?: boolean }) => {
-          if (input?.condition) {
-            this.handleToggle(input.condition, input.selected);
-          }
-          return {
-            conditions: this.items.map(i => ({
-              condition: i.id,
-              label: i.label,
-              count: i.count,
-              selected: i.checked,
-            })),
-          };
-        },
+        inputSchema: conditionFilterSchema,
+        execute: (input: { condition?: string; selected?: boolean }) =>
+          this.filterCondition(input?.condition, input?.selected),
       }, { signal: this.signal })?.catch(() => {});
     } catch {
       // Ignore if tool is already active

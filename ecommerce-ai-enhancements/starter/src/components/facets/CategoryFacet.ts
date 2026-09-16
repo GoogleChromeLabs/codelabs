@@ -16,10 +16,9 @@
  */
 
 import { BaseListFacet } from './BaseListFacet.ts';
+import { categoryFilterSchema } from '../../utils/filter-schemas.ts';
 
 export class CategoryFacet extends BaseListFacet {
-  private toolAbortController: AbortController | null = null;
-
   public connectedCallback(): void {
     this.facetType = 'category';
     this.facetTitle = 'Category';
@@ -27,38 +26,22 @@ export class CategoryFacet extends BaseListFacet {
     this.registerWebMCPTools();
   }
 
-  public disconnectedCallback(): void {
-    this.toolAbortController?.abort();
-    this.toolAbortController = null;
-    super.disconnectedCallback();
+  public filterCategory(category?: string, selected?: boolean) {
+    if (category) {
+      this.handleToggle(category, selected);
+    }
+    return {
+      categories: this.items.map(i => ({
+        category: i.id,
+        label: i.label,
+        count: i.count,
+        selected: i.checked,
+      })),
+    };
   }
 
   private registerWebMCPTools(): void {
-    /*
-     * TODO: Register the 'category_filter' WebMCP tool on document.modelContext.
-     *
-     * Expected Implementation:
-     * When WebMCP is supported (document.modelContext?.registerTool):
-     * Register 'category_filter' allowing an AI agent or assistant to:
-     * - Inspect available product categories with item counts and selected states.
-     * - Toggle a category filter (e.g. "Tents", "Backpacks", "Sleeping Bags").
-     *
-     * Tool specification:
-     * - name: 'category_filter'
-     * - title: 'Filter by Category'
-     * - description: Inspect available product categories or toggle a specific category filter.
-     * - inputSchema: {
-     *     type: 'object',
-     *     properties: {
-     *       category: { type: 'string', enum: PRODUCT_CATEGORIES, description: 'Category to filter by.' },
-     *       selected: { type: 'boolean', description: 'Explicit selection state.' },
-     *     },
-     *   }
-     * - execute: (input) => {
-     *     if (input?.category) this.handleToggle(input.category, input.selected);
-     *     return { categories: this.items.map(i => ({ category: i.id, label: i.label, count: i.count, selected: i.checked })) };
-     *   }
-     */
+    // 3.1.2 Register the 'category_filter' tool
   }
 }
 

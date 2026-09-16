@@ -46,19 +46,19 @@ export async function rankComplementaryGear(
     limit
   );
 
-  // Get prompt session
+  // 1.3.1 Get prompt session
   const session = await getPromptSession();
 
   try {
     // Generate the schema based on the shortlist and the total number of items to return
     const schema = createRankedProductIdsSchema(shortlist, limit);
 
-    // Prompt the session, using the schema to constrain the results
+    // 1.3.2 Prompt the session, using the schema to constrain the results
     const rawJson = await session.prompt(promptText, {
       responseConstraint: schema,
     });
 
-    // Parse the results and assemble the recommendations
+    // 1.3.3 Parse the results and assemble the recommendations
     const parsed = JSON.parse(rawJson) as RankedProductIdsResponse;
 
     return assembleRecommendations(
@@ -69,6 +69,7 @@ export async function rankComplementaryGear(
       limit
     );
   } finally {
+    // 1.3.4 Destroy the session
     session.destroy();
   }
 }

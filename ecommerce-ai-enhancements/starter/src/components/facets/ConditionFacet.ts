@@ -18,11 +18,16 @@
 import type { FacetItemData } from './BaseListFacet.ts';
 import { translator } from '../../utils/translator-helpers.ts';
 import { formatNumber } from '../../utils/formatters.ts';
+import { conditionFilterSchema } from '../../utils/filter-schemas.ts';
 
 export class ConditionFacet extends HTMLElement {
   private items: readonly FacetItemData[] = [];
   private unsubscribeLang: (() => void) | null = null;
   private toolAbortController: AbortController | null = null;
+
+  private get signal(): AbortSignal | undefined {
+    return this.toolAbortController?.signal;
+  }
   private localizedTitle: string = 'Conditions';
   private translatedLabels: Map<string, string> = new Map();
 
@@ -32,6 +37,7 @@ export class ConditionFacet extends HTMLElement {
   }
 
   public connectedCallback(): void {
+    this.toolAbortController = new AbortController();
     this.unsubscribeLang = translator.subscribe(() => {
       this.localize();
     });
@@ -48,32 +54,22 @@ export class ConditionFacet extends HTMLElement {
     this.unsubscribeLang = null;
   }
 
+  public filterCondition(condition?: string, selected?: boolean) {
+    if (condition) {
+      this.handleToggle(condition, selected);
+    }
+    return {
+      conditions: this.items.map(i => ({
+        condition: i.id,
+        label: i.label,
+        count: i.count,
+        selected: i.checked,
+      })),
+    };
+  }
+
   private registerWebMCPTools(): void {
-    /*
-     * TODO: Register the 'condition_filter' WebMCP tool on document.modelContext.
-     *
-     * Expected Implementation:
-     * When WebMCP is supported (document.modelContext?.registerTool):
-     * Register 'condition_filter' allowing an AI agent or assistant to:
-     * - Inspect available environmental conditions with product counts and selected states.
-     * - Toggle a condition filter (e.g. "Rain", "Snow", "Sub-Zero", "High Wind", "Extreme Cold", "4-Season").
-     *
-     * Tool specification:
-     * - name: 'condition_filter'
-     * - title: 'Filter by Weather Condition'
-     * - description: Inspect available environmental conditions or toggle a condition filter.
-     * - inputSchema: {
-     *     type: 'object',
-     *     properties: {
-     *       condition: { type: 'string', enum: CONDITIONS, description: 'Condition to filter by.' },
-     *       selected: { type: 'boolean', description: 'Explicit selection state.' },
-     *     },
-     *   }
-     * - execute: (input) => {
-     *     if (input?.condition) this.handleToggle(input.condition, input.selected);
-     *     return { conditions: this.items.map(i => ({ condition: i.id, label: i.label, count: i.count, selected: i.checked })) };
-     *   }
-     */
+    // 3.1.3 Register the 'condition_filter' tool
   }
 
   private async localize(): Promise<void> {

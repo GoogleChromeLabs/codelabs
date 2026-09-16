@@ -22,6 +22,7 @@ import {
   type WeightRange,
   type RatingTier,
 } from '../utils/recommendation-schemas.ts';
+import { semanticCatalogFilterSchema } from '../utils/filter-schemas.ts';
 import { getPromptSession } from './prompt-api.ts';
 import type { JourneyProfile } from '../utils/journey-helpers.ts';
 import type { Product } from '../catalog/dataset.ts';
@@ -82,6 +83,7 @@ let warmSession: LanguageModel | null = null;
  * Runs only from a user interaction, since session creation requires transient activation.
  */
 export async function prewarmSemanticFilterSession(): Promise<void> {
+  // 3.3.1 Prewarm the semantic filter session
   if (warmSession) return;
   try {
     warmSession = await getPromptSession(SEMANTIC_FILTER_SYSTEM_PROMPT);
@@ -97,6 +99,7 @@ async function inferSearchFacets(
   searchTerm: string,
   cachedJourney: JourneyProfile | null
 ): Promise<{ parsed: SemanticFilterResponse; cacheHit: boolean }> {
+  // 3.3.2 Infer search facets with the Prompt API
   const normalizedQuery = searchTerm.trim().toLowerCase();
   const cacheKey = persistentCache.createKey(
     'semantic_search_v3',
@@ -145,6 +148,7 @@ async function applyFacetsViaWebMCP(
   searchTerm: string,
   parsed: SemanticFilterResponse
 ): Promise<{ appliedFilters: SemanticFilterResult['appliedFilters']; toolsExecuted: string[] }> {
+  // 3.3.3 Apply facets via WebMCP
   const appliedFilters: SemanticFilterResult['appliedFilters'] = {};
   const toolsExecuted: string[] = [];
 
@@ -278,6 +282,7 @@ async function applyFacetsViaWebMCP(
 }
 
 export async function interpretAndApplySemanticFilter(searchTerm: string): Promise<SemanticFilterResult> {
+  // 3.3.4 Orchestrate semantic filter execution
   const t0 = performance.now();
   const cachedJourney = await persistentCache.get<JourneyProfile>('ai_cache', 'latest_journey_profile');
   const t1 = performance.now();
@@ -319,21 +324,13 @@ export function registerCatalogSemanticFilterTool(signal?: AbortSignal): void {
   if (!document.modelContext?.registerTool) return;
 
   try {
+    // 3.3.5 Register the 'semantic_catalog_filter' tool
     document.modelContext.registerTool({
       name: 'semantic_catalog_filter',
       title: 'Search the Catalog in Plain Language',
       description: 'Search and filter the catalog using natural language. Analyzes user search query against the cached journey profile to determine and automatically apply the appropriate category, activity, condition, price, weight, rating, and keyword filters using the catalog WebMCP filter tools. This tool runs exclusively on the catalog page and uses cached journey state without mutating the recommendation engine.',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          query: {
-            type: 'string',
-            description: 'Natural language search query to analyze and apply (e.g. "lightweight backpacking tent for wet conditions under $250")',
-          },
-        },
-        required: ['query'],
-      },
-      execute: async (input: { query: string }) => {
+      inputSchema: semanticCatalogFilterSchema,
+      execute: async (input: { query?: string }) => {
         if (!input?.query) return { success: false, error: 'Query is required.' };
         const result = await interpretAndApplySemanticFilter(input.query);
         return { success: true, ...result };

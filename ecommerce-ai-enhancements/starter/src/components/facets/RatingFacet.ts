@@ -16,10 +16,9 @@
  */
 
 import { BaseListFacet } from './BaseListFacet.ts';
+import { ratingFilterSchema } from '../../utils/filter-schemas.ts';
 
 export class RatingFacet extends BaseListFacet {
-  private toolAbortController: AbortController | null = null;
-
   public connectedCallback(): void {
     this.facetType = 'rating';
     this.facetTitle = 'Rating';
@@ -27,38 +26,22 @@ export class RatingFacet extends BaseListFacet {
     this.registerWebMCPTools();
   }
 
-  public disconnectedCallback(): void {
-    this.toolAbortController?.abort();
-    this.toolAbortController = null;
-    super.disconnectedCallback();
+  public filterRating(minRating?: string, selected?: boolean) {
+    if (minRating) {
+      this.handleToggle(minRating, selected);
+    }
+    return {
+      ratings: this.items.map(i => ({
+        minRating: i.id,
+        label: i.label,
+        count: i.count,
+        selected: i.checked,
+      })),
+    };
   }
 
   private registerWebMCPTools(): void {
-    /*
-     * TODO: Register the 'rating_filter' WebMCP tool on document.modelContext.
-     *
-     * Expected Implementation:
-     * When WebMCP is supported (document.modelContext?.registerTool):
-     * Register 'rating_filter' allowing an AI agent or assistant to:
-     * - Inspect available customer rating thresholds ('3.0', '4.0', '4.8') with product counts.
-     * - Toggle a minimum customer rating filter.
-     *
-     * Tool specification:
-     * - name: 'rating_filter'
-     * - title: 'Filter by Customer Rating'
-     * - description: Inspect available customer rating thresholds or toggle a minimum rating filter.
-     * - inputSchema: {
-     *     type: 'object',
-     *     properties: {
-     *       minRating: { type: 'string', enum: RATING_TIERS, description: 'Rating threshold ID.' },
-     *       selected: { type: 'boolean', description: 'Explicit selection state.' },
-     *     },
-     *   }
-     * - execute: (input) => {
-     *     if (input?.minRating) this.handleToggle(input.minRating, input.selected);
-     *     return { ratings: this.items.map(i => ({ minRating: i.id, label: i.label, count: i.count, selected: i.checked })) };
-     *   }
-     */
+    // 3.1.6 Register the 'rating_filter' tool
   }
 }
 

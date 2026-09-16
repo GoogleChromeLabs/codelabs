@@ -70,7 +70,12 @@ export class CatalogView extends HTMLElement {
     this.maybeRunSemanticSearch();
   }
 
+  private get signal(): AbortSignal | undefined {
+    return this.toolAbortController?.signal;
+  }
+
   public connectedCallback(): void {
+    this.toolAbortController = new AbortController();
     this.initFromUrl();
     this.render();
     this.relocateSidebar(window.innerWidth <= 900);
@@ -85,39 +90,50 @@ export class CatalogView extends HTMLElement {
 
   public disconnectedCallback(): void {
     this.toolAbortController?.abort();
+    this.toolAbortController = null;
     this.resizeObserver?.disconnect();
     this.unsubscribeLang?.();
   }
 
+  public getItemsSummary() {
+    const filtered = this.getFilteredProducts();
+    return {
+      totalCount: filtered.length,
+      products: filtered.map(p => ({
+        id: p.id,
+        name: p.name,
+        price: p.price,
+        rating: p.rating,
+        reviews: p.reviews,
+        activities: p.activities,
+        categories: p.categories,
+        conditions: p.conditions,
+        weight: p.weight,
+      })),
+    };
+  }
+
+  public resetFilters() {
+    this.filterState = createDefaultFilterState();
+    this.syncUrlAndRefresh();
+    return { success: true, message: 'All filters reset.' };
+  }
+
   private registerWebMCPTools(): void {
-    /*
-     * TODO: Register catalog inspection and filtering WebMCP tools on document.modelContext.
-     *
-     * Expected Implementation:
-     * When WebMCP is supported (document.modelContext?.registerTool):
-     * 1. 'list_items':
-     *    - title: 'List Matching Products'
-     *    - description: Retrieve catalog items matching currently active filters and keywords.
-     *    - inputSchema: { type: 'object', properties: {} }
-     *    - annotations: { readOnlyHint: true }
-     *    - execute: () => {
-     *        const filtered = this.getFilteredProducts();
-     *        return { totalCount: filtered.length, products: filtered.map(...) };
-     *      }
-     *
-     * 2. 'reset_filters':
-     *    - title: 'Reset All Filters'
-     *    - description: Clear all active catalog filters, categories, activities, conditions, brackets, and keywords.
-     *    - inputSchema: { type: 'object', properties: {} }
-     *    - execute: () => {
-     *        this.filterState = createDefaultFilterState();
-     *        this.syncUrlAndRefresh();
-     *        return { success: true, message: 'All filters reset.' };
-     *      }
-     *
-     * 3. Register the semantic catalog filter tool:
-     *    registerCatalogSemanticFilterTool(signal);
-     */
+    void this.signal;
+
+    // 3.2.1 Test to see if WebMCP is supported
+
+    try {
+      // 3.2.2 Register the 'list_items' tool
+
+      // 3.2.3 Register the 'reset_filters' tool
+
+      // 3.2.4 Register the catalog semantic filter tool
+
+    } catch {
+      // Ignore if tools are already active
+    }
   }
 
   private async localize(): Promise<void> {

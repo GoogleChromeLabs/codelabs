@@ -16,10 +16,9 @@
  */
 
 import { BaseListFacet } from './BaseListFacet.ts';
+import { priceFilterSchema } from '../../utils/filter-schemas.ts';
 
 export class PriceFacet extends BaseListFacet {
-  private toolAbortController: AbortController | null = null;
-
   public connectedCallback(): void {
     this.facetType = 'price';
     this.facetTitle = 'Price';
@@ -27,38 +26,22 @@ export class PriceFacet extends BaseListFacet {
     this.registerWebMCPTools();
   }
 
-  public disconnectedCallback(): void {
-    this.toolAbortController?.abort();
-    this.toolAbortController = null;
-    super.disconnectedCallback();
+  public filterPrice(priceRange?: string, selected?: boolean) {
+    if (priceRange) {
+      this.handleToggle(priceRange, selected);
+    }
+    return {
+      prices: this.items.map(i => ({
+        priceRange: i.id,
+        label: i.label,
+        count: i.count,
+        selected: i.checked,
+      })),
+    };
   }
 
   private registerWebMCPTools(): void {
-    /*
-     * TODO: Register the 'price_filter' WebMCP tool on document.modelContext.
-     *
-     * Expected Implementation:
-     * When WebMCP is supported (document.modelContext?.registerTool):
-     * Register 'price_filter' allowing an AI agent or assistant to:
-     * - Inspect available price brackets ('<50', '50-100', '100-250', '>250') with product counts.
-     * - Toggle a price bracket filter.
-     *
-     * Tool specification:
-     * - name: 'price_filter'
-     * - title: 'Filter by Price Range'
-     * - description: Inspect available price tiers or toggle a price filter.
-     * - inputSchema: {
-     *     type: 'object',
-     *     properties: {
-     *       priceRange: { type: 'string', enum: PRICE_RANGES, description: 'Price range ID to filter by.' },
-     *       selected: { type: 'boolean', description: 'Explicit selection state.' },
-     *     },
-     *   }
-     * - execute: (input) => {
-     *     if (input?.priceRange) this.handleToggle(input.priceRange, input.selected);
-     *     return { prices: this.items.map(i => ({ priceRange: i.id, label: i.label, count: i.count, selected: i.checked })) };
-     *   }
-     */
+    // 3.1.4 Register the 'price_filter' tool
   }
 }
 

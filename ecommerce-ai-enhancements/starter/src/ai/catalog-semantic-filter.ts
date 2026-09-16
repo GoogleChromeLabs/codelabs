@@ -16,6 +16,19 @@
  */
 
 import {
+  semanticFilterSchema,
+  type SemanticFilterResponse,
+  type PriceRange,
+  type WeightRange,
+  type RatingTier,
+} from '../utils/recommendation-schemas.ts';
+import { semanticCatalogFilterSchema } from '../utils/filter-schemas.ts';
+import { getPromptSession } from './prompt-api.ts';
+import type { JourneyProfile } from '../utils/journey-helpers.ts';
+import type { Product } from '../catalog/dataset.ts';
+import { logSemanticSearchTrace } from '../observability/devtools-trace.ts';
+import { persistentCache } from '../utils/persistent-cache.ts';
+import {
   PRODUCT_CATEGORIES,
   ACTIVITIES,
   CONDITIONS,
@@ -25,9 +38,7 @@ import {
 } from '../catalog/dataset.ts';
 import { PRICE_RANGES, WEIGHT_RANGES, RATING_TIERS } from '../utils/filter-helpers.ts';
 
-export type PriceRange = (typeof PRICE_RANGES)[number];
-export type WeightRange = (typeof WEIGHT_RANGES)[number];
-export type RatingTier = (typeof RATING_TIERS)[number];
+export type { PriceRange, WeightRange, RatingTier };
 
 export const SEMANTIC_FILTER_SYSTEM_PROMPT = `
 You are the Intelligent Catalog Filter Assistant for Mont-Royal Plein Air.
@@ -64,104 +75,238 @@ export interface SemanticFilterResult {
   readonly toolsExecuted: string[];
 }
 
-/**
- * Holds the session created by prewarmSemanticFilterSession() until the search
- * that follows claims it.
- */
+// Holds a session until the next search claims it.
 let warmSession: LanguageModel | null = null;
 
+/**
+ * Creates the search session ahead of the query the shopper is about to type.
+ * Runs only from a user interaction, since session creation requires transient activation.
+ */
 export async function prewarmSemanticFilterSession(): Promise<void> {
-  /*
-   * TODO: Create the search session before the shopper finishes typing.
-   *
-   * When implemented:
-   * If warmSession is already set, return. Otherwise call
-   * getPromptSession(SEMANTIC_FILTER_SYSTEM_PROMPT) — the helper you wrote in
-   * src/ai/prompt-api.ts — and store the result in warmSession so the search
-   * below can use that exact instance.
-   *
-   * Wrap it in try/catch: prewarming is best effort, and the real search will
-   * surface any error. Trigger it from a user interaction (focusing the search
-   * box): LanguageModel.create() requires transient activation.
-   */
+  // 3.3.1 Prewarm the semantic filter session
+}
+
+/**
+ * Infers structured filter criteria from a natural language query using the Prompt API.
+ */
+async function inferSearchFacets(
+  searchTerm: string,
+  cachedJourney: JourneyProfile | null
+): Promise<{ parsed: SemanticFilterResponse; cacheHit: boolean }> {
+  // 3.3.2 Infer search facets with the Prompt API
+  const normalizedQuery = searchTerm.trim().toLowerCase();
+  const cacheKey = persistentCache.createKey(
+    'semantic_search_v3',
+    normalizedQuery,
+    cachedJourney ? `${cachedJourney.primaryActivity}:${(cachedJourney.targetCategories || []).join(',')}` : 'fresh'
+  );
+
+  const cached = await persistentCache.get<SemanticFilterResponse>('ai_cache', cacheKey);
+  if (cached) {
+    return { parsed: cached, cacheHit: true };
+  }
+
+  const journeyContextText = cachedJourney
+    ? `Primary Activity: ${cachedJourney.primaryActivity} | Target Categories: ${(cachedJourney.targetCategories || []).join(', ')} | Implied Conditions: ${(cachedJourney.impliedConditions || []).join(', ')}`
+    : 'No prior journey profile recorded.';
+
+  const session = warmSession ?? (await getPromptSession(SEMANTIC_FILTER_SYSTEM_PROMPT));
+  warmSession = null;
+
+  const promptText = `
+NATURAL LANGUAGE SEARCH QUERY: "${searchTerm}"
+
+CACHED SHOPPER JOURNEY PROFILE (FROM RECOMMENDATION ENGINE):
+${journeyContextText}
+
+Determine the optimal facet filters and optional material/feature keyword (e.g. "down"). Return the JSON object according to the schema.`.trim();
+
+  try {
+    const rawJson = await session.prompt(promptText, {
+      responseConstraint: semanticFilterSchema,
+    });
+    const parsed = JSON.parse(rawJson) as SemanticFilterResponse;
+    await persistentCache.set('ai_cache', cacheKey, parsed);
+    return { parsed, cacheHit: false };
+  } finally {
+    session.destroy();
+  }
+}
+
+/**
+ * Applies inferred facets by invoking the catalog's registered WebMCP tools, relaxing constraints if no items match.
+ */
+async function applyFacetsViaWebMCP(
+  searchTerm: string,
+  parsed: SemanticFilterResponse
+): Promise<{ appliedFilters: SemanticFilterResult['appliedFilters']; toolsExecuted: string[] }> {
+  // 3.3.3 Apply facets via WebMCP
+  const appliedFilters: SemanticFilterResult['appliedFilters'] = {};
+  const toolsExecuted: string[] = [];
+
+  if (!document.modelContext?.getTools) {
+    return { appliedFilters, toolsExecuted };
+  }
+
+  const modelCtx = document.modelContext;
+  const allTools = await modelCtx.getTools();
+
+  // The schema guarantees these are catalog enum members or null.
+  const category = parsed.category ?? undefined;
+  const activity = parsed.activity ?? undefined;
+  const conditions = parsed.conditions;
+
+  // Guardrail: honours numeric facets only when the query mentions them.
+  const queryHasPrice = /(under|below|\$|cheap|budget|cost|price|less than|>|<)/i.test(searchTerm);
+  const queryHasWeight = /(light|ultralight|gram|weight|heavy|kg|oz)/i.test(searchTerm);
+  const queryHasRating = /(star|rating|reviewed|top|best)/i.test(searchTerm);
+
+  const priceRange = queryHasPrice ? parsed.priceRange ?? undefined : undefined;
+  const weightRange = queryHasWeight ? parsed.weightRange ?? undefined : undefined;
+  const minRating = queryHasRating ? parsed.minRating ?? undefined : undefined;
+
+  // Guardrail: drops a keyword that repeats the category or a condition.
+  const rawKw = parsed.keyword?.trim() ?? '';
+  const isRedundant =
+    rawKw.toLowerCase() === category?.toLowerCase() ||
+    conditions.some((c: string) => c.toLowerCase() === rawKw.toLowerCase()) ||
+    ['bag', 'bags', 'sleeping bag', 'tent', 'tents', 'pack', 'packs', 'gear'].includes(rawKw.toLowerCase());
+  const keyword = isRedundant ? '' : rawKw;
+
+  let needsSerializedInput = false;
+
+  const executeFacet = async (
+    toolName: string,
+    args: Record<string, unknown>
+  ): Promise<{ totalCount?: number } | null> => {
+    const tool = allTools.find(t => t.name === toolName);
+    if (!tool) return null;
+
+    toolsExecuted.push(toolName);
+
+    let result: string;
+    if (needsSerializedInput) {
+      result = await modelCtx.executeTool(tool, JSON.stringify(args));
+    } else {
+      try {
+        result = await modelCtx.executeTool(tool, args);
+      } catch {
+        needsSerializedInput = true;
+        result = await modelCtx.executeTool(tool, JSON.stringify(args));
+      }
+    }
+
+    return JSON.parse(result);
+  };
+
+  // 1. Reset filters to clean slate
+  await executeFacet('reset_filters', {});
+
+  // 2. Sequentially apply active facets for deterministic state transitions
+  if (category) {
+    appliedFilters.category = category;
+    await executeFacet('category_filter', { category, selected: true });
+  }
+  if (activity) {
+    appliedFilters.activity = activity;
+    await executeFacet('activity_filter', { activity, selected: true });
+  }
+  if (conditions.length > 0) {
+    appliedFilters.conditions = conditions;
+    for (const cond of conditions) {
+      await executeFacet('condition_filter', { condition: cond, selected: true });
+    }
+  }
+  if (priceRange) {
+    appliedFilters.priceRange = priceRange;
+    await executeFacet('price_filter', { priceRange, selected: true });
+  }
+  if (weightRange) {
+    appliedFilters.weightRange = weightRange;
+    await executeFacet('weight_filter', { weightRange, selected: true });
+  }
+  if (minRating) {
+    appliedFilters.minRating = minRating;
+    await executeFacet('rating_filter', { minRating, selected: true });
+  }
+  if (keyword) {
+    appliedFilters.keyword = keyword;
+    await executeFacet('keyword_filter', { keyword });
+  }
+
+  // Removes inferred facets one at a time, most speculative first, until the list returns results.
+  const isEmpty = async (): Promise<boolean> => {
+    const res = await executeFacet('list_items', {});
+    return res !== null && (res.totalCount ?? 0) === 0;
+  };
+
+  if ((await isEmpty()) && keyword) {
+    await executeFacet('keyword_filter', { keyword: '' });
+    appliedFilters.keyword = '';
+  }
+  if ((await isEmpty()) && conditions.length > 0) {
+    for (const cond of conditions) {
+      await executeFacet('condition_filter', { condition: cond, selected: false });
+    }
+    delete appliedFilters.conditions;
+  }
+  if ((await isEmpty()) && weightRange) {
+    await executeFacet('weight_filter', { weightRange, selected: false });
+    delete appliedFilters.weightRange;
+  }
+  if ((await isEmpty()) && priceRange) {
+    await executeFacet('price_filter', { priceRange, selected: false });
+    delete appliedFilters.priceRange;
+  }
+  if ((await isEmpty()) && minRating) {
+    await executeFacet('rating_filter', { minRating, selected: false });
+    delete appliedFilters.minRating;
+  }
+
+  return { appliedFilters, toolsExecuted };
 }
 
 export async function interpretAndApplySemanticFilter(searchTerm: string): Promise<SemanticFilterResult> {
-  // Suppress unused parameter linter warning in starter shell
-  void searchTerm;
+  // 3.3.4 Orchestrate semantic filter execution
+  const t0 = performance.now();
+  const cachedJourney = await persistentCache.get<JourneyProfile>('ai_cache', 'latest_journey_profile');
+  const t1 = performance.now();
 
-  /*
-   * TODO: Implement Natural Language Semantic Search with Prompt API & WebMCP Tools.
-   *
-   * Expected Implementation:
-   * 1. Retrieve the cached journey profile from the recommendation pipeline
-   *    (e.g., persistentCache.get('ai_cache', 'latest_journey_profile')) to maintain
-   *    continuity between browsing journey intent and search results.
-   *
-   * 2. Claim the session prewarming created, falling back to a new one if the
-   *    shopper never focused the search box. Clear the slot either way — the
-   *    session is single-use, so the next query starts with clean history:
-   *      const session = warmSession ?? (await getPromptSession(SEMANTIC_FILTER_SYSTEM_PROMPT));
-   *      warmSession = null;
-   *
-   * 3. Construct prompt combining the natural language query and journey context:
-   *    - Analyze query for category, activity, conditions, price constraints, weight constraints, rating, and keyword.
-   *    - Pass semanticFilterSchema as the prompt's `responseConstraint`:
-   *      const rawJson = await session.prompt(promptText, { responseConstraint: semanticFilterSchema });
-   *    - Every field in that schema is pinned to a catalog enum (or null), so
-   *      JSON.parse(rawJson) is all the parsing you need — no validation pass.
-   *    - Destroy the session in a finally block: session.destroy().
-   *
-   * 4. Apply extracted filters dynamically via WebMCP tools:
-   *    - Inspect available tools using document.modelContext.getTools(). Each
-   *      entry is a RegisteredTool: { name, title, description, inputSchema,
-   *      window, origin }.
-   *    - Run one by calling:
-   *        const json = await document.modelContext.executeTool(tool, args);
-   *      It resolves with a DOMString, so JSON.parse() the result.
-   *    - Compatibility note: the spec passes `args` as a plain object and
-   *      serializes it for you, but Chrome currently rejects an object with
-   *      "Failed to parse input arguments" and wants JSON.stringify(args)
-   *      instead. Try the spec form first and fall back once.
-   *    - Execute 'reset_filters' to start with a clean filter state.
-   *    - Sequentially invoke registered WebMCP filter tools:
-   *      * 'category_filter' with { category, selected: true }
-   *      * 'activity_filter' with { activity, selected: true }
-   *      * 'condition_filter' with each matched condition
-   *      * 'price_filter', 'weight_filter', 'rating_filter' if explicitly requested
-   *      * 'keyword_filter' with extracted material/feature keyword
-   *    - Query 'list_items' to check count; if 0 results, gracefully relax keyword or conditions.
-   *
-   * 5. Log DevTools performance and observability trace using logSemanticSearchTrace(...).
-   *
-   * 6. Return SemanticFilterResult with appliedFilters, explanation, and toolsExecuted list.
-   */
+  const { parsed, cacheHit } = await inferSearchFacets(searchTerm, cachedJourney);
+  const t2 = performance.now();
 
-  // Fallback starter shell return
+  const { appliedFilters, toolsExecuted } = await applyFacetsViaWebMCP(searchTerm, parsed);
+  const t3 = performance.now();
+
+  const catalogView = document.querySelector<HTMLElement & { getFilteredProducts?: () => readonly Product[] }>('catalog-view');
+  const matchingProducts = catalogView?.getFilteredProducts ? catalogView.getFilteredProducts() : [];
+
+  logSemanticSearchTrace({
+    query: searchTerm,
+    cachedJourney,
+    promptOutput: parsed,
+    appliedFilters,
+    toolsExecuted,
+    matchingProducts,
+    cacheHit,
+    timings: {
+      step1DurationMs: t1 - t0,
+      step2DurationMs: t2 - t1,
+      step3DurationMs: t3 - t2,
+      totalDurationMs: t3 - t0,
+    },
+  });
+
   return {
-    appliedFilters: {},
-    explanation: 'Semantic filter starter shell (Prompt API & WebMCP implementation placeholder).',
-    cachedJourneyUsed: false,
-    toolsExecuted: [],
+    appliedFilters,
+    explanation: parsed.explanation || 'Applied semantic search filters.',
+    cachedJourneyUsed: !!cachedJourney,
+    toolsExecuted,
   };
 }
 
 export function registerCatalogSemanticFilterTool(signal?: AbortSignal): void {
-  // Suppress unused parameter linter warning in starter shell
   void signal;
 
-  /*
-   * TODO: Register the 'semantic_catalog_filter' tool with WebMCP (document.modelContext).
-   *
-   * When WebMCP is available (document.modelContext?.registerTool):
-   * Register a tool named 'semantic_catalog_filter':
-   * - title: 'Search the Catalog in Plain Language'
-   * - description: Search and filter the catalog using natural language.
-   * - inputSchema: { type: 'object', properties: { query: { type: 'string' } }, required: ['query'] }
-   * - execute: async (input) => {
-   *     const result = await interpretAndApplySemanticFilter(input.query);
-   *     return { success: true, ...result };
-   *   }
-   */
+  // 3.3.5 Register the 'semantic_catalog_filter' tool
 }
-

@@ -16,7 +16,7 @@
  */
 
 import { BaseListFacet } from './BaseListFacet.ts';
-import { PRICE_RANGES } from '../../utils/filter-helpers.ts';
+import { priceFilterSchema } from '../../utils/filter-schemas.ts';
 
 export class PriceFacet extends BaseListFacet {
   public connectedCallback(): void {
@@ -26,43 +26,34 @@ export class PriceFacet extends BaseListFacet {
     this.registerWebMCPTools();
   }
 
+  public filterPrice(priceRange?: string, selected?: boolean) {
+    if (priceRange) {
+      this.handleToggle(priceRange, selected);
+    }
+    return {
+      prices: this.items.map(i => ({
+        priceRange: i.id,
+        label: i.label,
+        count: i.count,
+        selected: i.checked,
+      })),
+    };
+  }
+
   private registerWebMCPTools(): void {
     if (!document.modelContext?.registerTool) return;
 
     try {
+      // 3.1.4 Register the 'price_filter' tool
       document.modelContext.registerTool(
         {
           name: 'price_filter',
           title: 'Filter by Price Range',
           description:
             'Inspect available price tiers (\'<50\', \'50-100\', \'100-250\', \'>250\') with matching product counts and active states, or toggle a price filter on the catalog page. Use this tool when the user specifies a budget or price constraint.',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              priceRange: {
-                type: 'string',
-                enum: PRICE_RANGES,
-                description: 'Price range ID to filter by. Omit to view tiers without changing.',
-              },
-              selected: {
-                type: 'boolean',
-                description: 'Explicit selection state: true to select, false to deselect. If omitted, toggles.',
-              },
-            },
-          },
-          execute: (input: { priceRange?: string; selected?: boolean }) => {
-            if (input?.priceRange) {
-              this.handleToggle(input.priceRange, input.selected);
-            }
-            return {
-              prices: this.items.map(i => ({
-                priceRange: i.id,
-                label: i.label,
-                count: i.count,
-                selected: i.checked,
-              })),
-            };
-          },
+          inputSchema: priceFilterSchema,
+          execute: (input: { priceRange?: string; bracket?: string; selected?: boolean }) =>
+            this.filterPrice(input?.priceRange || input?.bracket, input?.selected),
         },
         { signal: this.signal }
       )?.catch(() => {});

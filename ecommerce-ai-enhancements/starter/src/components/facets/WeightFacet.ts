@@ -16,10 +16,9 @@
  */
 
 import { BaseListFacet } from './BaseListFacet.ts';
+import { weightFilterSchema } from '../../utils/filter-schemas.ts';
 
 export class WeightFacet extends BaseListFacet {
-  private toolAbortController: AbortController | null = null;
-
   public connectedCallback(): void {
     this.facetType = 'weight';
     this.facetTitle = 'Weight';
@@ -27,40 +26,22 @@ export class WeightFacet extends BaseListFacet {
     this.registerWebMCPTools();
   }
 
-  public disconnectedCallback(): void {
-    this.toolAbortController?.abort();
-    this.toolAbortController = null;
-    super.disconnectedCallback();
+  public filterWeight(weightRange?: string, selected?: boolean) {
+    if (weightRange) {
+      this.handleToggle(weightRange, selected);
+    }
+    return {
+      weights: this.items.map(i => ({
+        bracket: i.id,
+        label: i.label,
+        count: i.count,
+        selected: i.checked,
+      })),
+    };
   }
 
   private registerWebMCPTools(): void {
-    /*
-     * TODO: Register the 'weight_filter' WebMCP tool on document.modelContext.
-     *
-     * Expected Implementation:
-     * When WebMCP is supported (document.modelContext?.registerTool):
-     * Register 'weight_filter' allowing an AI agent or assistant to:
-     * - Inspect available weight brackets ('<500', '500-1000', '1000-2000', '>2000') with product counts.
-     * - Toggle a weight bracket filter.
-     *
-     * Tool specification:
-     * - name: 'weight_filter'
-     * - title: 'Filter by Weight Range'
-     * - description: Inspect available weight brackets or toggle a weight bracket filter.
-     * - inputSchema: {
-     *     type: 'object',
-     *     properties: {
-     *       weightRange: { type: 'string', enum: WEIGHT_RANGES, description: 'Weight bracket ID (<500, 500-1000, 1000-2000, >2000).' },
-     *       bracket: { type: 'string', enum: WEIGHT_RANGES, description: 'Alias for weightRange.' },
-     *       selected: { type: 'boolean', description: 'Explicit selection state.' },
-     *     },
-     *   }
-     * - execute: (input) => {
-     *     const val = input?.weightRange || input?.bracket;
-     *     if (val) this.handleToggle(val, input.selected);
-     *     return { weights: this.items.map(i => ({ bracket: i.id, label: i.label, count: i.count, selected: i.checked })) };
-     *   }
-     */
+    // 3.1.5 Register the 'weight_filter' tool
   }
 }
 

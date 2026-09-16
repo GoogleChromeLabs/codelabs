@@ -35,7 +35,7 @@ export async function getPromptSession(
   systemPrompt: string = DEFAULT_SYSTEM_PROMPT,
   options: { signal?: AbortSignal } = {}
 ): Promise<LanguageModel> {
-  // Memoize the sessions, returning a clone with a new signal if one exists
+  // 1.1.1 Memoize the sessions, returning a clone with a new signal if one exists
   const base = baseSessions.get(systemPrompt);
   if (base) {
     try {
@@ -46,12 +46,12 @@ export async function getPromptSession(
     }
   }
 
-  // Check to see if the Prompt API is available
+  // 1.1.2 Check to see if the Prompt API is available
   if (!('LanguageModel' in self)) {
     throw new Error('This browser does not implement the Prompt API.');
   }
 
-  // Declares the text modality and language for both directions
+  // 1.1.3 Declare the expected inputs and outputs for the model
   const expectedInputs: LanguageModelExpected[] = [{ type: 'text', languages: ['en'] }];
   const expectedOutputs: LanguageModelExpected[] = [{ type: 'text', languages: ['en'] }];
 
@@ -61,6 +61,7 @@ export async function getPromptSession(
     throw new Error('The language model is unavailable for the requested configuration.');
   }
 
+  // 1.1.4 Create options
   // Build initial Language Model options, with signal and system prompt
   const createOptions: LanguageModelCreateOptions = {
     expectedInputs,
@@ -91,6 +92,7 @@ export async function getPromptSession(
     };
   }
 
+  // 1.1.5 Create the Session
   // Add the session to the memoized cache, then return a clone.
   try {
     const newBase = await LanguageModel.create(createOptions);

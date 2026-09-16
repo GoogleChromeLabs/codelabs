@@ -228,6 +228,7 @@ export class ProductView extends HTMLElement {
     if (!document.modelContext?.registerTool) return;
 
     try {
+      // 2.1.3 Register the `get_current_product` tool.
       document.modelContext.registerTool({
         name: 'get_current_product',
         title: 'Get Current Product',

@@ -97,41 +97,55 @@ export class CatalogView extends HTMLElement {
     this.unsubscribeLang?.();
   }
 
+  public getItemsSummary() {
+    const filtered = this.getFilteredProducts();
+    return {
+      totalCount: filtered.length,
+      products: filtered.map(p => ({
+        id: p.id,
+        name: p.name,
+        price: p.price,
+        rating: p.rating,
+        reviews: p.reviews,
+        activities: p.activities,
+        categories: p.categories,
+        conditions: p.conditions,
+        weight: p.weight,
+      })),
+    };
+  }
+
+  public resetFilters() {
+    this.filterState = createDefaultFilterState();
+    this.syncUrlAndRefresh();
+    return { success: true, message: 'All filters reset.' };
+  }
+
   private registerWebMCPTools(): void {
+    // 3.2.1 Test to see if WebMCP is supported
     if (!document.modelContext?.registerTool) return;
 
     try {
+      // 3.2.2 Register the 'list_items' tool
       document.modelContext.registerTool({
         name: 'list_items',
         title: 'List Matching Products',
         description: 'Retrieve catalog items matching currently active filters and keywords.',
         inputSchema: { type: 'object', properties: {} },
         annotations: { readOnlyHint: true },
-        execute: () => {
-          const filtered = this.getFilteredProducts();
-          return {
-            totalCount: filtered.length,
-            products: filtered.map(p => ({
-              id: p.id, name: p.name, price: p.price, rating: p.rating,
-              reviews: p.reviews, activities: p.activities, categories: p.categories,
-              conditions: p.conditions, weight: p.weight,
-            })),
-          };
-        },
+        execute: () => this.getItemsSummary(),
       }, { signal: this.signal })?.catch(() => {});
 
+      // 3.2.3 Register the 'reset_filters' tool
       document.modelContext.registerTool({
         name: 'reset_filters',
         title: 'Reset All Filters',
         description: 'Clear all active catalog filters, categories, activities, conditions, brackets, and keywords.',
         inputSchema: { type: 'object', properties: {} },
-        execute: () => {
-          this.filterState = createDefaultFilterState();
-          this.syncUrlAndRefresh();
-          return { success: true, message: 'All filters reset.' };
-        },
+        execute: () => this.resetFilters(),
       }, { signal: this.signal })?.catch(() => {});
 
+      // 3.2.4 Register the catalog semantic filter tool
       registerCatalogSemanticFilterTool(this.signal);
     } catch {
       // Ignore if tools are already active

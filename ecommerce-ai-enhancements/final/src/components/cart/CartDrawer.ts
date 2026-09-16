@@ -116,6 +116,7 @@ export class CartDrawer extends HTMLElement {
     if (!document.modelContext?.registerTool) return;
 
     try {
+      // 2.2.1 Register the `view_cart` tool
       document.modelContext.registerTool({
         name: 'view_cart',
         title: 'View Cart',
@@ -134,6 +135,7 @@ export class CartDrawer extends HTMLElement {
         },
       }, { signal: this.signal })?.catch(() => {});
 
+      // 2.2.2 Register the `manage_cart` tool
       document.modelContext.registerTool({
         name: 'manage_cart',
         title: 'Add or Remove Cart Items',

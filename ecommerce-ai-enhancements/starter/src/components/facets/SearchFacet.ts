@@ -16,11 +16,16 @@
  */
 
 import { translator } from '../../utils/translator-helpers.ts';
+import { keywordFilterSchema } from '../../utils/filter-schemas.ts';
 
 export class SearchFacet extends HTMLElement {
   private currentValue: string = '';
   private unsubscribeLang: (() => void) | null = null;
   private toolAbortController: AbortController | null = null;
+
+  private get signal(): AbortSignal | undefined {
+    return this.toolAbortController?.signal;
+  }
   private localizedTitle: string = 'Keyword Filter';
   private localizedPlaceholder: string = 'Filter';
 
@@ -35,6 +40,7 @@ export class SearchFacet extends HTMLElement {
   }
 
   public connectedCallback(): void {
+    this.toolAbortController = new AbortController();
     this.render();
     this.unsubscribeLang = translator.subscribe(() => {
       this.localize();
@@ -49,34 +55,22 @@ export class SearchFacet extends HTMLElement {
     this.unsubscribeLang = null;
   }
 
+  public updateKeyword(keyword?: string) {
+    if (keyword !== undefined) {
+      this.setValue(keyword);
+      this.dispatchEvent(
+        new CustomEvent('search-filter-change', {
+          bubbles: true,
+          composed: true,
+          detail: { query: this.currentValue },
+        })
+      );
+    }
+    return { currentKeyword: this.getValue() };
+  }
+
   private registerWebMCPTools(): void {
-    /*
-     * TODO: Register the 'keyword_filter' WebMCP tool on document.modelContext.
-     *
-     * Expected Implementation:
-     * When WebMCP is supported (document.modelContext?.registerTool):
-     * Register 'keyword_filter' allowing an AI agent or assistant to:
-     * - Inspect the current catalog keyword filter.
-     * - Set or update the keyword filter (triggering a search-filter-change event).
-     *
-     * Tool specification:
-     * - name: 'keyword_filter'
-     * - title: 'Filter by Keyword'
-     * - description: Inspect or set the keyword text query filtering items in the catalog sidebar.
-     * - inputSchema: {
-     *     type: 'object',
-     *     properties: {
-     *       keyword: { type: 'string', description: 'Keyword string to filter catalog by.' },
-     *     },
-     *   }
-     * - execute: (input) => {
-     *     if (input?.keyword !== undefined) {
-     *       this.setValue(input.keyword);
-     *       this.dispatchEvent(new CustomEvent('search-filter-change', { bubbles: true, composed: true, detail: { query: this.currentValue } }));
-     *     }
-     *     return { currentKeyword: this.getValue() };
-     *   }
-     */
+    // 3.1.7 Register the 'keyword_filter' tool
   }
 
   private async localize(): Promise<void> {

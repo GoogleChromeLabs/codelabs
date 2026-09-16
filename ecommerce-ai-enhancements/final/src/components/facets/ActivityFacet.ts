@@ -16,7 +16,7 @@
  */
 
 import { BaseListFacet } from './BaseListFacet.ts';
-import { ACTIVITIES } from '../../catalog/dataset.ts';
+import { activityFilterSchema } from '../../utils/filter-schemas.ts';
 
 export class ActivityFacet extends BaseListFacet {
   public connectedCallback(): void {
@@ -26,43 +26,34 @@ export class ActivityFacet extends BaseListFacet {
     this.registerWebMCPTools();
   }
 
+  public filterActivity(activity?: string, selected?: boolean) {
+    if (activity) {
+      this.handleToggle(activity, selected);
+    }
+    return {
+      activities: this.items.map(i => ({
+        activity: i.id,
+        label: i.label,
+        count: i.count,
+        selected: i.checked,
+      })),
+    };
+  }
+
   private registerWebMCPTools(): void {
     if (!document.modelContext?.registerTool) return;
 
     try {
+      // 3.1.1 Register the 'activity_filter' tool
       document.modelContext.registerTool(
         {
           name: 'activity_filter',
           title: 'Filter by Activity',
           description:
             'Inspect available outdoor activities with their matching product counts and active selection states, or toggle a specific activity filter on the catalog page. Use this tool to filter the catalog for adventures like "Backpacking", "Camping", "Hiking", "Mountaineering", "Paddling", or "Trail Running".',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              activity: {
-                type: 'string',
-                enum: ACTIVITIES,
-                description: 'Activity to filter by. Omit to view current activities and counts without changing.',
-              },
-              selected: {
-                type: 'boolean',
-                description: 'Explicit selection state: true to select, false to deselect. If omitted, toggles.',
-              },
-            },
-          },
-          execute: (input: { activity?: string; selected?: boolean }) => {
-            if (input?.activity) {
-              this.handleToggle(input.activity, input.selected);
-            }
-            return {
-              activities: this.items.map(i => ({
-                activity: i.id,
-                label: i.label,
-                count: i.count,
-                selected: i.checked,
-              })),
-            };
-          },
+          inputSchema: activityFilterSchema,
+          execute: (input: { activity?: string; selected?: boolean }) =>
+            this.filterActivity(input?.activity, input?.selected),
         },
         { signal: this.signal }
       )?.catch(() => {});

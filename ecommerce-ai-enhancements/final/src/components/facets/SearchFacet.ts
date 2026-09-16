@@ -16,6 +16,7 @@
  */
 
 import { translator } from '../../utils/translator-helpers.ts';
+import { keywordFilterSchema } from '../../utils/filter-schemas.ts';
 
 export class SearchFacet extends HTMLElement {
   private currentValue: string = '';
@@ -54,38 +55,33 @@ export class SearchFacet extends HTMLElement {
     this.unsubscribeLang = null;
   }
 
+  public updateKeyword(keyword?: string) {
+    if (keyword !== undefined) {
+      this.setValue(keyword);
+      this.dispatchEvent(
+        new CustomEvent('search-filter-change', {
+          bubbles: true,
+          composed: true,
+          detail: { query: this.currentValue },
+        })
+      );
+    }
+    return { currentKeyword: this.getValue() };
+  }
+
   private registerWebMCPTools(): void {
     if (!document.modelContext?.registerTool) return;
 
     try {
+      // 3.1.7 Register the 'keyword_filter' tool
       document.modelContext.registerTool(
         {
           name: 'keyword_filter',
           title: 'Filter by Keyword',
           description:
             'Inspect or set the keyword text query filtering items in the catalog sidebar (sets the ?keyword= query parameter). The filter performs an exact case-insensitive substring match against product titles and descriptions. Use concise single keywords or exact text fragments (e.g. "tent", "merino", "titanium", "down"). Do not use natural language phrases or questions that will fail substring matching.',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              keyword: {
-                type: 'string',
-                description: 'Keyword string to filter catalog by. Omit to view current keyword without changing.',
-              },
-            },
-          },
-          execute: (input: { keyword?: string }) => {
-            if (input?.keyword !== undefined) {
-              this.setValue(input.keyword);
-              this.dispatchEvent(
-                new CustomEvent('search-filter-change', {
-                  bubbles: true,
-                  composed: true,
-                  detail: { query: this.currentValue },
-                })
-              );
-            }
-            return { currentKeyword: this.getValue() };
-          },
+          inputSchema: keywordFilterSchema,
+          execute: (input: { keyword?: string }) => this.updateKeyword(input?.keyword),
         },
         { signal: this.signal }
       )?.catch(() => {});

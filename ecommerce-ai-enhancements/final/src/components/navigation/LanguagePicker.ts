@@ -62,6 +62,7 @@ export class LanguagePicker extends HTMLElement {
     if (!document.modelContext?.registerTool) return;
 
     try {
+      // 2.3.1 Register the `switch_language` tool
       document.modelContext.registerTool(
         {
           name: 'switch_language',

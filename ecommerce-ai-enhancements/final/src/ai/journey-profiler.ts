@@ -28,7 +28,7 @@ export async function inferJourneyProfile(
   context: ProfilerInputContext,
   catalogMap: ReadonlyMap<string, Product>
 ): Promise<JourneyProfile> {
-  // Get a new prompt session
+  // 1.2.1 Get a new prompt session
   const session = await getPromptSession();
 
   // Format the user journey context into a prompt
@@ -38,18 +38,18 @@ export async function inferJourneyProfile(
   Synthesize the holistic journey profile and select 3-6 complementary categories.`.trim();
 
   try {
-    // Prompt the model with a structured data response
+    // 1.2.2 Prompt the model with a structured data response
     const rawJson = await session.prompt(promptText, {
       responseConstraint: journeyProfileSchema,
     });
 
-    // Parse and deduplicate target categories
+    // 1.2.3 Parse and deduplicate target categories
     const parsed = JSON.parse(rawJson) as JourneyProfileResponse;
 
     // De-duplicates the categories the model returned.
     const targetCategories = [...new Set(parsed.targetCategories)];
 
-    // Return parsed results
+    // 1.2.4 Return parsed results
     return {
       primaryActivity: parsed.primaryActivity,
       impliedConditions: parsed.impliedConditions,
@@ -57,6 +57,7 @@ export async function inferJourneyProfile(
       equipmentRationale: `${parsed.primaryActivity} Companion Kit`,
     };
   } finally {
+    // 1.2.5 Destroy the session
     session.destroy();
   }
 }
