@@ -18,44 +18,14 @@
 import { getPromptSession } from './prompt-api.ts';
 import { createRankedProductIdsSchema, type RankedProductIdsResponse } from './recommendation-schemas.ts';
 import type { Product } from '../catalog/dataset.ts';
-import type { JourneyProfile } from './journey-profiler.ts';
+import type { JourneyProfile } from './journey-helpers.ts';
+import {
+  formatRerankerPrompt,
+  assembleRecommendations,
+  type RecommendedItem,
+} from './reranker-helpers.ts';
 
-export const RE_RANKER_SYSTEM_PROMPT = `
-You are the Technical Outfitting Director for Mont-Royal Plein Air.
-Rank complementary gear using strict priority tiers:
-1. HIGHEST PRIORITY (BOUGHT AS A SET / DIRECT PAIRINGS): Products designed as direct companions, paired components, or fitted accessories to the active product (e.g. Tent <-> Fitted Footprint, Stove <-> Matching Fuel/Cookset, Sleeping Bag <-> Sleeping Pad).
-2. SECOND PRIORITY (ACTIVE CART COMPANIONS): Items that pair directly with products already in the cart (3.0x weight).
-3. THIRD PRIORITY (JOURNEY COMPLETION): Items that complete the shopper's overarching outdoor outfitting journey.
-4. MANDATORY (DEPRIORITIZE REPLACEMENTS): Strongly avoid recommending competing replacement products in categories the shopper already has in their cart (e.g., if a tent is in the cart, do NOT recommend other tents; recommend companion gear like footprints, sleeping pads, or stoves instead).
-`.trim();
-
-export interface RecommendedItem {
-  readonly product: Product;
-  readonly synergyRationale: string;
-}
-
-function isReplacementCandidate(candidate: Product, cartProducts?: readonly Product[]): boolean {
-  if (!cartProducts || cartProducts.length === 0) return false;
-  const nameLower = candidate.name.toLowerCase();
-  const isCompanion =
-    nameLower.includes('footprint') ||
-    nameLower.includes('fuel') ||
-    nameLower.includes('canister') ||
-    nameLower.includes('stake') ||
-    nameLower.includes('liner') ||
-    nameLower.includes('cube') ||
-    nameLower.includes('cover') ||
-    nameLower.includes('gaiter') ||
-    nameLower.includes('whistle');
-  if (isCompanion) return false;
-
-  for (const item of cartProducts) {
-    if (candidate.specs?.['Compatibility']?.toLowerCase().includes(item.name.toLowerCase())) return false;
-    const commonCategories = candidate.categories.filter(c => item.categories.includes(c));
-    if (commonCategories.length > 0) return true;
-  }
-  return false;
-}
+export type { RecommendedItem };
 
 export async function rankComplementaryGear(
   profile: JourneyProfile,
@@ -64,108 +34,40 @@ export async function rankComplementaryGear(
   cartProducts?: readonly Product[],
   limit: number = 5
 ): Promise<readonly RecommendedItem[]> {
+  // Early return if there are no candidate products
   if (candidates.length === 0) return [];
 
-  const session = await getPromptSession(RE_RANKER_SYSTEM_PROMPT);
-  const cartCategories = new Set(cartProducts?.flatMap(p => p.categories) || []);
+  // Get prompt text and shortlist for the prompt to pick from
+  const { shortlist, promptText } = formatRerankerPrompt(
+    profile,
+    candidates,
+    currentProduct,
+    cartProducts,
+    limit
+  );
 
-  const currentText = currentProduct
-    ? `CURRENT PRODUCT: ${currentProduct.name} (ID: "${currentProduct.id}") | Categories: ${currentProduct.categories.join('/')} | Activity: ${currentProduct.activities.join('/')} | Conditions: ${currentProduct.conditions.join('/')}`
-    : '';
-
-  const cartText = (cartProducts && cartProducts.length > 0)
-    ? `CART ITEMS (3.0x PRIORITY): ${cartProducts.map(p => `${p.name} (ID: "${p.id}")`).join(', ')}`
-    : '';
-
-  const cartCatText = cartCategories.size > 0
-    ? `CATEGORIES ALREADY IN CART (DEPRIORITIZE REPLACEMENTS): ${[...cartCategories].join(', ')}`
-    : '';
-
-  const prioritizedCandidates = [...candidates].sort((a, b) => {
-    const aRepl = isReplacementCandidate(a, cartProducts) ? 1 : 0;
-    const bRepl = isReplacementCandidate(b, cartProducts) ? 1 : 0;
-    return aRepl - bRepl;
-  });
-
-  // The shortlist the model is allowed to choose from. The same IDs are used
-  // for the prompt text and for the schema's enum, so they can never drift.
-  const shortlist = prioritizedCandidates.slice(0, 20);
-  const candidateList = shortlist
-    .map(c => `- ID: "${c.id}" | ${c.name} | Cat: ${c.categories.join('/')} | $${c.price}`)
-    .join('\n');
-
-  const promptText = `
-${currentText}
-${cartText}
-${cartCatText}
-JOURNEY PROFILE: Activity: ${profile.primaryActivity} | Conditions: ${profile.impliedConditions.join(', ')}
-
-CANDIDATES (${candidates.length} items):
-${candidateList}
-
-PRIORITIZATION INSTRUCTIONS:
-1. Prioritize direct companions and set pairings for the current product or cart items (e.g. footprint for tent, fuel for stove, pad for sleeping bag).
-2. Prioritize items paired with cart items (3.0x weight).
-3. DEPRIORITIZE REPLACEMENTS: If a category is already in the cart (e.g. Tents), do NOT recommend another item in that category. Recommend accessories or missing kit essentials instead.
-4. Complete the overarching expedition journey.
-
-Rank the top ${limit} product IDs.
-`.trim();
+  // Get prompt session
+  const session = await getPromptSession();
 
   try {
-    // Constraining the enum to this request's candidate IDs means the model
-    // cannot hallucinate, truncate, or reformat an ID.
+    // Generate the schema based on the shortlist and the total number of items to return
+    const schema = createRankedProductIdsSchema(shortlist, limit);
+
+    // Prompt the session, using the schema to constrain the results
     const rawJson = await session.prompt(promptText, {
-      responseConstraint: createRankedProductIdsSchema(
-        shortlist.map(c => c.id),
-        limit
-      ),
+      responseConstraint: schema,
     });
 
+    // Parse the results and assemble the recommendations
     const parsed = JSON.parse(rawJson) as RankedProductIdsResponse;
 
-    const nonReplacements: RecommendedItem[] = [];
-    const replacements: RecommendedItem[] = [];
-    const seen = new Set<string>();
-
-    for (const id of parsed.rankedProductIds) {
-      if (seen.has(id)) continue;
-      seen.add(id);
-
-      const product = shortlist.find(c => c.id === id)!;
-      const cat = product.categories[0] || 'Gear';
-      const item = { product, synergyRationale: `${profile.primaryActivity} Synergy • ${cat}` };
-      if (isReplacementCandidate(product, cartProducts)) {
-        replacements.push(item);
-      } else {
-        nonReplacements.push(item);
-      }
-    }
-
-    const results: RecommendedItem[] = [...nonReplacements];
-
-    // If still under limit, backfill with non-replacement candidates
-    if (results.length < limit) {
-      for (const cand of prioritizedCandidates) {
-        if (!isReplacementCandidate(cand, cartProducts) && !results.some(r => r.product.id === cand.id)) {
-          results.push({
-            product: cand,
-            synergyRationale: `${profile.primaryActivity} Synergy • ${cand.categories[0] || 'Gear'}`,
-          });
-        }
-        if (results.length >= limit) break;
-      }
-    }
-
-    // Only if still under limit, allow replacements
-    if (results.length < limit) {
-      for (const item of replacements) {
-        results.push(item);
-        if (results.length >= limit) break;
-      }
-    }
-
-    return results;
+    return assembleRecommendations(
+      parsed,
+      candidates,
+      profile,
+      cartProducts,
+      limit
+    );
   } finally {
     session.destroy();
   }

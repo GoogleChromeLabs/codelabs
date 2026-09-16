@@ -16,7 +16,7 @@
  */
 
 import { getPromptSession } from './prompt-api.ts';
-import { createRankedProductIdsSchema, type RankedProductIdsResponse } from './recommendation-schemas.ts';
+import { createRankedProductIdsSchema } from './recommendation-schemas.ts';
 import type { Product } from '../catalog/dataset.ts';
 import type { JourneyProfile } from './journey-helpers.ts';
 import {
@@ -50,10 +50,7 @@ export async function rankComplementaryGear(
 
   try {
     // Generate the schema based on the shortlist and the total number of items to return
-    const schema = createRankedProductIdsSchema(
-      shortlist.map(c => c.id),
-      limit
-    );
+    const schema = createRankedProductIdsSchema(shortlist, limit);
 
     // 1.3.2 Prompt the session, using the schema to constrain the results
 
@@ -61,14 +58,13 @@ export async function rankComplementaryGear(
 
     return [];
 
-   // return assembleRecommendations(
-   //    parsed.rankedProductIds,
-   //    shortlist,
-   //    candidates,
-   //    cartProducts,
-   //    profile.primaryActivity,
-   //    limit
-   //  );
+    // return assembleRecommendations(
+    //   parsed,
+    //   candidates,
+    //   profile,
+    //   cartProducts,
+    //   limit
+    // );
   } finally {
     // 1.3.4 Destroy the session
   }

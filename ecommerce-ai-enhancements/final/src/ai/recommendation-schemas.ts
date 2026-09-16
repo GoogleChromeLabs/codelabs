@@ -28,6 +28,7 @@ import {
   type ProductCategory,
   type ActivityType,
   type WeatherCondition,
+  type Product,
 } from '../catalog/dataset.ts';
 import { PRICE_RANGES, WEIGHT_RANGES, RATING_TIERS } from '../utils/filter-helpers.ts';
 
@@ -94,11 +95,13 @@ export interface RankedProductIdsResponse {
 
 /**
  * Builds a re-ranking schema whose `enum` is the exact set of candidate product IDs for this request.
+ * Accepts an array of candidate products or product ID strings.
  */
 export function createRankedProductIdsSchema(
-  candidateIds: readonly string[],
+  candidates: readonly (string | Product | { id: string })[],
   maxItems: number
 ): Record<string, unknown> {
+  const ids = candidates.map(item => (typeof item === 'string' ? item : item.id));
   return {
     $schema: JSON_SCHEMA_DIALECT,
     title: 'Ranked complementary gear',
@@ -109,9 +112,9 @@ export function createRankedProductIdsSchema(
         description:
           'Product IDs copied verbatim from the candidate list, best pairing first, with no duplicates.',
         type: 'array',
-        items: { type: 'string', enum: [...candidateIds] },
-        minItems: Math.min(1, candidateIds.length),
-        maxItems: Math.min(maxItems, candidateIds.length),
+        items: { type: 'string', enum: ids },
+        minItems: Math.min(1, ids.length),
+        maxItems: Math.min(maxItems, ids.length),
       },
     },
     required: ['rankedProductIds'],
