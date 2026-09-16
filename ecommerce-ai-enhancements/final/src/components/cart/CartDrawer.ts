@@ -22,11 +22,21 @@ import { formatCAD, formatNumber } from '../../utils/formatters.ts';
 import { translator } from '../../utils/translator-helpers.ts';
 import type { RecommendedItem } from '../../ai/synergy-reranker.ts';
 
+export interface CartItemOperation {
+  productId: string;
+  action?: 'add' | 'remove' | 'update';
+  quantity?: number;
+}
+
 export class CartDrawer extends HTMLElement {
   private unsubscribeCart: (() => void) | null = null;
   private unsubscribeRecs: (() => void) | null = null;
   private unsubscribeLang: (() => void) | null = null;
   private toolAbortController: AbortController | null = null;
+
+  private get signal(): AbortSignal | undefined {
+    return this.toolAbortController?.signal;
+  }
   private catalogMap: Map<string, Product> = new Map(CATALOG.map(p => [p.id, p]));
   private translatedNames: Map<string, string> = new Map();
   private localizedStrings = {
@@ -37,6 +47,7 @@ export class CartDrawer extends HTMLElement {
   };
 
   public connectedCallback(): void {
+    this.toolAbortController = new AbortController();
     this.render();
     this.setupListeners();
     this.unsubscribeCart = cartStore.subscribe(() => this.updateView());
@@ -68,6 +79,27 @@ export class CartDrawer extends HTMLElement {
     if (dialog?.open) this.close(); else this.show();
   }
 
+  public async updateCart(items: CartItemOperation[]) {
+    if (!items?.length) return { success: false, error: 'No items provided to manage_cart.' };
+
+    for (const op of items) {
+      const pid = op?.productId;
+      if (!pid || !this.catalogMap.has(pid)) continue;
+      const action = op.action || 'add';
+      const qty = Math.max(0, op.quantity ?? 1);
+      if (action === 'remove' || (action === 'update' && qty === 0)) {
+        cartStore.removeItem(pid);
+      } else if (action === 'update') {
+        cartStore.updateQuantity(pid, qty);
+      } else {
+        cartStore.addItem(pid, qty || 1);
+      }
+    }
+    this.show();
+    await recommendationStore.refresh();
+    return { success: true, cart: this.getCartSummary() };
+  }
+
   private getCartSummary() {
     const items = this.getCartDetails();
     const subtotal = items.reduce((sum, i) => sum + i.product.price * i.quantity, 0);
@@ -82,84 +114,54 @@ export class CartDrawer extends HTMLElement {
 
   private registerWebMCPTools(): void {
     if (!document.modelContext?.registerTool) return;
-    this.toolAbortController?.abort();
-    this.toolAbortController = new AbortController();
-    const signal = this.toolAbortController.signal;
 
-    document.modelContext.registerTool({
-      name: 'view_cart',
-      title: 'View Cart',
-      description: 'View the shopping cart, calculate subtotal, Quebec taxes (14.975%), and total, open the cart drawer dialog, and return the updated cart and recommendations to complete the cart, which you must show to the user. You must display these recommendations to help the user complete their cart.',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          openDrawer: { type: 'boolean', description: 'Whether to open the cart drawer dialog visually. Defaults to true.' },
-        },
-      },
-      annotations: { readOnlyHint: true },
-      execute: async (input: { openDrawer?: boolean }) => {
-        if (input?.openDrawer !== false) this.show();
-        await recommendationStore.refresh();
-        return this.getCartSummary();
-      },
-    }, { signal });
-
-    document.modelContext.registerTool({
-      name: 'manage_cart',
-      title: 'Add or Remove Cart Items',
-      description: 'Manage items in the shopping cart: add, update, or remove one or multiple products at once. Opens the cart drawer dialog and returns the updated cart and recommendations to complete the cart, which you must show to the user. Whenever you modify the cart, you must display and suggest these recommended products to the user to help them complete their expedition kit.',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          items: {
-            type: 'array',
-            items: {
-              type: 'object',
-              properties: {
-                productId: { type: 'string', description: 'Unique product ID to add, update, or remove.' },
-                action: { type: 'string', enum: ['add', 'remove', 'update'], description: "Operation: 'add' (default), 'remove', or 'update'." },
-                quantity: { type: 'integer', minimum: 0, description: "Quantity to add or set (defaults to 1 for 'add')." },
-              },
-              required: ['productId'],
-            },
-            description: 'Array of cart item operations to perform in batch.',
+    try {
+      document.modelContext.registerTool({
+        name: 'view_cart',
+        title: 'View Cart',
+        description: 'View the shopping cart, calculate subtotal, Quebec taxes (14.975%), and total, open the cart drawer dialog, and return the updated cart and recommendations to complete the cart, which you must show to the user. You must display these recommendations to help the user complete their cart.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            openDrawer: { type: 'boolean', description: 'Whether to open the cart drawer dialog visually. Defaults to true.' },
           },
-          productId: { type: 'string', description: 'Shorthand: single product ID to add, update, or remove.' },
-          action: { type: 'string', enum: ['add', 'remove', 'update'], description: "Shorthand: operation for single product ('add', 'remove', 'update')." },
-          quantity: { type: 'integer', minimum: 0, description: 'Shorthand: quantity for single product.' },
         },
-      },
-      execute: async (input: {
-        items?: Array<{ productId: string; action?: 'add' | 'remove' | 'update'; quantity?: number }>;
-        productId?: string;
-        action?: 'add' | 'remove' | 'update';
-        quantity?: number;
-      }) => {
-        const ops = input?.items?.length
-          ? input.items
-          : input?.productId
-            ? [{ productId: input.productId, action: input.action, quantity: input.quantity }]
-            : [];
-        if (!ops.length) return { success: false, error: 'No items provided to manage_cart.' };
+        annotations: { readOnlyHint: true },
+        execute: async (input: { openDrawer?: boolean }) => {
+          if (input?.openDrawer !== false) this.show();
+          await recommendationStore.refresh();
+          return this.getCartSummary();
+        },
+      }, { signal: this.signal })?.catch(() => {});
 
-        for (const op of ops) {
-          const pid = op?.productId;
-          if (!pid || !this.catalogMap.has(pid)) continue;
-          const action = op.action || 'add';
-          const qty = Math.max(0, op.quantity ?? 1);
-          if (action === 'remove' || (action === 'update' && qty === 0)) {
-            cartStore.removeItem(pid);
-          } else if (action === 'update') {
-            cartStore.updateQuantity(pid, qty);
-          } else {
-            cartStore.addItem(pid, qty || 1);
-          }
-        }
-        this.show();
-        await recommendationStore.refresh();
-        return { success: true, cart: this.getCartSummary() };
-      },
-    }, { signal });
+      document.modelContext.registerTool({
+        name: 'manage_cart',
+        title: 'Add or Remove Cart Items',
+        description: 'Manage items in the shopping cart: add, update, or remove products. Opens the cart drawer dialog and returns the updated cart and recommendations to complete the cart, which you must show to the user. Whenever you modify the cart, you must display and suggest these recommended products to the user to help them complete their expedition kit.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            items: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  productId: { type: 'string', description: 'Unique product ID to add, update, or remove.' },
+                  action: { type: 'string', enum: ['add', 'remove', 'update'], description: "Operation: 'add' (default), 'remove', or 'update'." },
+                  quantity: { type: 'integer', minimum: 0, description: "Quantity to add or set (defaults to 1 for 'add')." },
+                },
+                required: ['productId'],
+              },
+              description: 'Array of cart item operations to perform.',
+            },
+          },
+          required: ['items'],
+        },
+        execute: async ({ items }: { items: CartItemOperation[] }) => this.updateCart(items),
+      }, { signal: this.signal })?.catch(() => {});
+    } catch {
+      // Ignore if tools are already active
+    }
   }
 
   private async localize(): Promise<void> {

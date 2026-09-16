@@ -18,25 +18,48 @@
 import {
   translator,
   SUPPORTED_LANGUAGES,
+  SUPPORTED_LANGUAGE_CODES,
   type SupportedLanguage,
 } from '../../utils/translator-helpers.ts';
 
 export class LanguagePicker extends HTMLElement {
   private unsubscribe: (() => void) | null = null;
   private selectEl: HTMLSelectElement | null = null;
+  private toolAbortController: AbortController | null = null;
+
+  private get signal(): AbortSignal | undefined {
+    return this.toolAbortController?.signal;
+  }
 
   public connectedCallback(): void {
+    this.toolAbortController = new AbortController();
     this.render();
     this.unsubscribe = translator.subscribe((lang) => {
       if (this.selectEl && this.selectEl.value !== lang) {
         this.selectEl.value = lang;
       }
     });
+    this.registerWebMCPTools();
   }
 
   public disconnectedCallback(): void {
+    this.toolAbortController?.abort();
+    this.toolAbortController = null;
     this.unsubscribe?.();
     this.unsubscribe = null;
+  }
+
+  public async switchLanguage(language: SupportedLanguage) {
+    if (!language || !SUPPORTED_LANGUAGE_CODES.includes(language)) {
+      return { success: false, error: `Invalid language code: ${language}. Supported: ${SUPPORTED_LANGUAGE_CODES.join(', ')}` };
+    }
+    await translator.getSession(language);
+    translator.setLanguage(language);
+    return { success: true, language, dir: document.documentElement.dir };
+  }
+
+  private registerWebMCPTools(): void {
+    // 2.3.1 Register the `switch_language` tool
   }
 
   private render(): void {
@@ -57,9 +80,7 @@ export class LanguagePicker extends HTMLElement {
     this.selectEl = this.querySelector<HTMLSelectElement>('#lang-select');
     this.selectEl?.addEventListener('change', (e: Event) => {
       const target = e.target as HTMLSelectElement;
-      const code = target.value as SupportedLanguage;
-      translator.getSession(code);
-      translator.setLanguage(code);
+      this.switchLanguage(target.value as SupportedLanguage);
     });
   }
 }

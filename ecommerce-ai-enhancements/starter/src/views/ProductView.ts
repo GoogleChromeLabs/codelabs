@@ -220,29 +220,7 @@ export class ProductView extends HTMLElement {
   }
 
   private registerWebMCPTools(): void {
-    /*
-     * TODO: Register the 'get_current_product' WebMCP tool on document.modelContext.
-     *
-     * Expected Implementation:
-     * When WebMCP is supported (document.modelContext?.registerTool):
-     * Register 'get_current_product' allowing an AI agent or assistant to:
-     * - Retrieve full technical specifications, pricing, rating, conditions,
-     *   and companion kit recommendations for the product currently displayed.
-     *
-     * Tool specification:
-     * - name: 'get_current_product'
-     * - title: 'Get Current Product'
-     * - description: Retrieve full technical specs and recommendations for current product.
-     * - inputSchema: { type: 'object', properties: {} }
-     * - annotations: { readOnlyHint: true }
-     * - execute: async () => {
-     *     await recommendationStore.refresh();
-     *     return {
-     *       product: this.product,
-     *       recommendations: recommendationStore.getRecommendations().map(r => r.product),
-     *     };
-     *   }
-     */
+    // 2.1.3 Register the `get_current_product` tool.
   }
 
   private renderNotFound(): void {

@@ -69,28 +69,14 @@ export class ForYouSection extends HTMLElement {
   }
 
   private registerWebMCPTools(): void {
-    /*
-     * TODO: Register the 'get_recommendations' WebMCP tool on document.modelContext.
-     *
-     * Expected Implementation:
-     * When WebMCP is supported (document.modelContext?.registerTool):
-     * Register 'get_recommendations' allowing an AI agent or assistant to:
-     * - Retrieve the 5 AI-generated companion products recommended to complete the kit for the current product.
-     *
-     * Tool specification:
-     * - name: 'get_recommendations'
-     * - title: 'Get Recommended Products'
-     * - description: Retrieve the 5 AI-generated companion products recommended to complete the kit for the current product.
-     * - inputSchema: { type: 'object', properties: {} }
-     * - annotations: { readOnlyHint: true }
-     * - execute: async () => {
-     *     await recommendationStore.refresh();
-     *     return {
-     *       productId: this.getAttribute('current-product-id') || '',
-     *       recommendations: recommendationStore.getRecommendations().map(r => r.product),
-     *     };
-     *   }
-     */
+    // 2.1.1 Test to see if WebMCP is supported
+
+    try {
+      // 2.1.2 Register the `get_recommendations` tool
+
+    } catch {
+      // Ignore if the tool is already active
+    }
   }
 
   private async localize(): Promise<void> {

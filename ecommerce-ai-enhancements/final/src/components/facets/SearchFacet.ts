@@ -21,6 +21,10 @@ export class SearchFacet extends HTMLElement {
   private currentValue: string = '';
   private unsubscribeLang: (() => void) | null = null;
   private toolAbortController: AbortController | null = null;
+
+  private get signal(): AbortSignal | undefined {
+    return this.toolAbortController?.signal;
+  }
   private localizedTitle: string = 'Keyword Filter';
   private localizedPlaceholder: string = 'Filter';
 
@@ -35,6 +39,7 @@ export class SearchFacet extends HTMLElement {
   }
 
   public connectedCallback(): void {
+    this.toolAbortController = new AbortController();
     this.render();
     this.unsubscribeLang = translator.subscribe(() => {
       this.localize();
@@ -51,9 +56,6 @@ export class SearchFacet extends HTMLElement {
 
   private registerWebMCPTools(): void {
     if (!document.modelContext?.registerTool) return;
-    this.toolAbortController?.abort();
-    this.toolAbortController = new AbortController();
-    const signal = this.toolAbortController.signal;
 
     try {
       document.modelContext.registerTool(
@@ -85,7 +87,7 @@ export class SearchFacet extends HTMLElement {
             return { currentKeyword: this.getValue() };
           },
         },
-        { signal }
+        { signal: this.signal }
       )?.catch(() => {});
     } catch {
       // Ignore if tool is already active

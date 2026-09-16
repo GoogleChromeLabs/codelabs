@@ -32,6 +32,11 @@ export class BaseListFacet extends HTMLElement {
   protected unsubscribeLang: (() => void) | null = null;
   protected translatedTitle: string = '';
   protected translatedLabels: Map<string, string> = new Map();
+  protected toolAbortController: AbortController | null = null;
+
+  protected get signal(): AbortSignal | undefined {
+    return this.toolAbortController?.signal;
+  }
 
   public configure(facetType: string, facetTitle: string): void {
     this.facetType = facetType;
@@ -48,6 +53,7 @@ export class BaseListFacet extends HTMLElement {
   }
 
   public connectedCallback(): void {
+    this.toolAbortController = new AbortController();
     this.unsubscribeLang = translator.subscribe(() => {
       this.localize();
     });
@@ -57,6 +63,8 @@ export class BaseListFacet extends HTMLElement {
   }
 
   public disconnectedCallback(): void {
+    this.toolAbortController?.abort();
+    this.toolAbortController = null;
     this.unsubscribeLang?.();
     this.unsubscribeLang = null;
   }

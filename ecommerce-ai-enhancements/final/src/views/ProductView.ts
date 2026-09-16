@@ -30,6 +30,10 @@ export class ProductView extends HTMLElement {
   private product: Product | null = null;
   private unsubscribeLang: (() => void) | null = null;
   private toolAbortController: AbortController | null = null;
+
+  private get signal(): AbortSignal | undefined {
+    return this.toolAbortController?.signal;
+  }
   private translatedTitle: string = '';
   private translatedDesc: string = '';
   private localizedStrings = {
@@ -49,6 +53,7 @@ export class ProductView extends HTMLElement {
   }
 
   public connectedCallback(): void {
+    this.toolAbortController = new AbortController();
     this.unsubscribeLang = translator.subscribe(() => {
       this.localize();
     });
@@ -56,6 +61,7 @@ export class ProductView extends HTMLElement {
     if (initialId && !this.product) {
       this.loadProduct(initialId);
     }
+    this.registerWebMCPTools();
   }
 
   public disconnectedCallback(): void {
@@ -216,14 +222,10 @@ export class ProductView extends HTMLElement {
 
     const addBtn = this.querySelector('.pdp-add-action');
     addBtn?.addEventListener('click', this.handleAddToCart);
-    this.registerWebMCPTools();
   }
 
   private registerWebMCPTools(): void {
-    if (!document.modelContext?.registerTool || !this.product) return;
-    this.toolAbortController?.abort();
-    this.toolAbortController = new AbortController();
-    const signal = this.toolAbortController.signal;
+    if (!document.modelContext?.registerTool) return;
 
     try {
       document.modelContext.registerTool({
@@ -233,13 +235,14 @@ export class ProductView extends HTMLElement {
         inputSchema: { type: 'object', properties: {} },
         annotations: { readOnlyHint: true },
         execute: async () => {
+          if (!this.product) return { error: 'No product currently loaded.' };
           await recommendationStore.refresh();
           return {
             product: this.product,
             recommendations: recommendationStore.getRecommendations().map(r => r.product),
           };
         },
-      }, { signal })?.catch(() => {});
+      }, { signal: this.signal })?.catch(() => {});
     } catch {
       // Registration failures leave the page rendered without tools.
     }

@@ -201,6 +201,7 @@ export class SiteHeader extends HTMLElement {
         <div class="header-search-slot" id="header-search-slot"></div>
 
         <div class="header-actions">
+          <!-- Task 1.4.7 Enable the Language Picker -->
           <!-- <language-picker></language-picker> -->
 
           <button class="cart-trigger-btn" type="button" commandfor="cart-dialog" command="show-modal" aria-label="View Shopping Cart">

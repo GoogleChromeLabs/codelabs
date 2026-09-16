@@ -24,6 +24,10 @@ export class ConditionFacet extends HTMLElement {
   private items: readonly FacetItemData[] = [];
   private unsubscribeLang: (() => void) | null = null;
   private toolAbortController: AbortController | null = null;
+
+  private get signal(): AbortSignal | undefined {
+    return this.toolAbortController?.signal;
+  }
   private localizedTitle: string = 'Conditions';
   private translatedLabels: Map<string, string> = new Map();
 
@@ -33,6 +37,7 @@ export class ConditionFacet extends HTMLElement {
   }
 
   public connectedCallback(): void {
+    this.toolAbortController = new AbortController();
     this.unsubscribeLang = translator.subscribe(() => {
       this.localize();
     });
@@ -51,9 +56,6 @@ export class ConditionFacet extends HTMLElement {
 
   private registerWebMCPTools(): void {
     if (!document.modelContext?.registerTool) return;
-    this.toolAbortController?.abort();
-    this.toolAbortController = new AbortController();
-    const signal = this.toolAbortController.signal;
 
     try {
       document.modelContext.registerTool({
@@ -87,7 +89,7 @@ export class ConditionFacet extends HTMLElement {
             })),
           };
         },
-      }, { signal })?.catch(() => {});
+      }, { signal: this.signal })?.catch(() => {});
     } catch {
       // Ignore if tool is already active
     }

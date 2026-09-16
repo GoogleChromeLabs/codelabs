@@ -81,36 +81,9 @@ export class CartDrawer extends HTMLElement {
   }
 
   private registerWebMCPTools(): void {
-    /*
-     * TODO: Register cart inspection and mutation WebMCP tools on document.modelContext.
-     *
-     * Expected Implementation:
-     * When WebMCP is supported (document.modelContext?.registerTool):
-     * 1. 'view_cart':
-     *    - title: 'View Cart'
-     *    - description: View the shopping cart, calculate subtotal, Quebec taxes (14.975%), and total,
-     *      open the cart drawer dialog, and return cart details and companion recommendations.
-     *    - inputSchema: { type: 'object', properties: { openDrawer: { type: 'boolean' } } }
-     *    - annotations: { readOnlyHint: true }
-     *    - execute: async (input) => { if (input?.openDrawer !== false) this.show(); await recommendationStore.refresh(); return this.getCartSummary(); }
-     *
-     * 2. 'manage_cart':
-     *    - title: 'Add or Remove Cart Items'
-     *    - description: Manage items in the shopping cart (add, update, remove) in batch or singly.
-     *      Opens the cart drawer dialog and returns updated cart and recommendations.
-     *    - inputSchema: {
-     *        type: 'object',
-     *        properties: {
-     *          items: { type: 'array', items: { type: 'object', properties: { productId: { type: 'string' }, action: { type: 'string' }, quantity: { type: 'integer' } } } },
-     *          productId: { type: 'string' },
-     *          action: { type: 'string', enum: ['add', 'remove', 'update'] },
-     *          quantity: { type: 'integer' },
-     *        },
-     *      }
-     *    - execute: async (input) => {
-     *        // Execute requested cart mutations via cartStore, show drawer, refresh recommendations, and return cart summary
-     *      }
-     */
+    // 2.2.1 Register the `view_cart` tool
+
+    // 2.2.2 Register the `manage_cart` tool
   }
 
   private async localize(): Promise<void> {

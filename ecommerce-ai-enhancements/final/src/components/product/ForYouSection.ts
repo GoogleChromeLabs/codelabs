@@ -27,6 +27,10 @@ export class ForYouSection extends HTMLElement {
   private recommendations: readonly RecommendedItem[] = [];
   private localizedTitle: string = 'For You';
 
+  private get signal(): AbortSignal | undefined {
+    return this.toolAbortController?.signal;
+  }
+
   public static get observedAttributes(): string[] {
     return ['current-product-id'];
   }
@@ -39,6 +43,7 @@ export class ForYouSection extends HTMLElement {
   }
 
   public connectedCallback(): void {
+    this.toolAbortController = new AbortController();
     this.renderLoading();
     const prodId = this.getAttribute('current-product-id');
     if (prodId) {
@@ -69,12 +74,11 @@ export class ForYouSection extends HTMLElement {
   }
 
   private registerWebMCPTools(): void {
+    // Test to see if WebMCP is supported
     if (!document.modelContext?.registerTool) return;
-    this.toolAbortController?.abort();
-    this.toolAbortController = new AbortController();
-    const signal = this.toolAbortController.signal;
 
     try {
+      // Register the `get_recommendations` tool
       document.modelContext.registerTool({
         name: 'get_recommendations',
         title: 'Get Recommended Products',
@@ -88,7 +92,7 @@ export class ForYouSection extends HTMLElement {
             recommendations: recommendationStore.getRecommendations().map(r => r.product),
           };
         },
-      }, { signal })?.catch(() => {});
+      }, { signal: this.signal })?.catch(() => {});
     } catch {
       // Ignore if tool is already active
     }

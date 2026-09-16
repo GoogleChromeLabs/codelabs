@@ -27,7 +27,12 @@ export class LanguagePicker extends HTMLElement {
   private selectEl: HTMLSelectElement | null = null;
   private toolAbortController: AbortController | null = null;
 
+  private get signal(): AbortSignal | undefined {
+    return this.toolAbortController?.signal;
+  }
+
   public connectedCallback(): void {
+    this.toolAbortController = new AbortController();
     this.render();
     this.unsubscribe = translator.subscribe((lang) => {
       if (this.selectEl && this.selectEl.value !== lang) {
@@ -44,41 +49,44 @@ export class LanguagePicker extends HTMLElement {
     this.unsubscribe = null;
   }
 
+  public async switchLanguage(language: SupportedLanguage) {
+    if (!language || !SUPPORTED_LANGUAGE_CODES.includes(language)) {
+      return { success: false, error: `Invalid language code: ${language}. Supported: ${SUPPORTED_LANGUAGE_CODES.join(', ')}` };
+    }
+    await translator.getSession(language);
+    translator.setLanguage(language);
+    return { success: true, language, dir: document.documentElement.dir };
+  }
+
   private registerWebMCPTools(): void {
     if (!document.modelContext?.registerTool) return;
-    this.toolAbortController?.abort();
-    this.toolAbortController = new AbortController();
-    const signal = this.toolAbortController.signal;
 
-    document.modelContext.registerTool(
-      {
-        name: 'switch_language',
-        title: 'Change Language',
-        description:
-          "Switch the application's active language and document direction (LTR/RTL) using Chrome's built-in Translator API. Re-translates all visible UI components and formats numbers and currency according to the selected language locale. Use this tool when the user requests a language switch or prefers a different language.",
-        inputSchema: {
-          type: 'object',
-          properties: {
-            language: {
-              type: 'string',
-              enum: SUPPORTED_LANGUAGE_CODES,
-              description: 'Target language code',
+    try {
+      document.modelContext.registerTool(
+        {
+          name: 'switch_language',
+          title: 'Change Language',
+          description:
+            "Switch the application's active language and document direction (LTR/RTL) using Chrome's built-in Translator API. Re-translates all visible UI components and formats numbers and currency according to the selected language locale. Use this tool when the user requests a language switch or prefers a different language.",
+          inputSchema: {
+            type: 'object',
+            properties: {
+              language: {
+                type: 'string',
+                enum: SUPPORTED_LANGUAGE_CODES,
+                description: 'Target language code',
+              },
             },
+            required: ['language'],
           },
-          required: ['language'],
+          execute: async ({ language }: { language: SupportedLanguage }) =>
+            this.switchLanguage(language),
         },
-        execute: async (input: { language: SupportedLanguage }) => {
-          const lang = input?.language;
-          if (!lang || !SUPPORTED_LANGUAGE_CODES.includes(lang)) {
-            return { success: false, error: `Invalid language code: ${lang}. Supported: ${SUPPORTED_LANGUAGE_CODES.join(', ')}` };
-          }
-          await translator.getSession(lang);
-          translator.setLanguage(lang);
-          return { success: true, language: lang, dir: document.documentElement.dir };
-        },
-      },
-      { signal }
-    );
+        { signal: this.signal }
+      )?.catch(() => {});
+    } catch {
+      // Ignore if tool is already active
+    }
   }
 
   private render(): void {
@@ -99,9 +107,7 @@ export class LanguagePicker extends HTMLElement {
     this.selectEl = this.querySelector<HTMLSelectElement>('#lang-select');
     this.selectEl?.addEventListener('change', (e: Event) => {
       const target = e.target as HTMLSelectElement;
-      const code = target.value as SupportedLanguage;
-      translator.getSession(code);
-      translator.setLanguage(code);
+      this.switchLanguage(target.value as SupportedLanguage);
     });
   }
 }

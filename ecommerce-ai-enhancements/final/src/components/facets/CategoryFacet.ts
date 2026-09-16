@@ -19,8 +19,6 @@ import { BaseListFacet } from './BaseListFacet.ts';
 import { PRODUCT_CATEGORIES } from '../../catalog/dataset.ts';
 
 export class CategoryFacet extends BaseListFacet {
-  private toolAbortController: AbortController | null = null;
-
   public connectedCallback(): void {
     this.facetType = 'category';
     this.facetTitle = 'Category';
@@ -28,17 +26,8 @@ export class CategoryFacet extends BaseListFacet {
     this.registerWebMCPTools();
   }
 
-  public disconnectedCallback(): void {
-    this.toolAbortController?.abort();
-    this.toolAbortController = null;
-    super.disconnectedCallback();
-  }
-
   private registerWebMCPTools(): void {
     if (!document.modelContext?.registerTool) return;
-    this.toolAbortController?.abort();
-    this.toolAbortController = new AbortController();
-    const signal = this.toolAbortController.signal;
 
     try {
       document.modelContext.registerTool(
@@ -75,7 +64,7 @@ export class CategoryFacet extends BaseListFacet {
             };
           },
         },
-        { signal }
+        { signal: this.signal }
       )?.catch(() => {});
     } catch {
       // Ignore if tool is already active

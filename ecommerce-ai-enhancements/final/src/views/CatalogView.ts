@@ -39,6 +39,10 @@ export class CatalogView extends HTMLElement {
   private resizeObserver: ResizeObserver | null = null;
   private unsubscribeLang: (() => void) | null = null;
   private toolAbortController: AbortController | null = null;
+
+  private get signal(): AbortSignal | undefined {
+    return this.toolAbortController?.signal;
+  }
   private lastSemanticQuery: string | null = null;
   private isSemanticSearching: boolean = false;
   private activeSemanticQuery: string = '';
@@ -73,6 +77,7 @@ export class CatalogView extends HTMLElement {
   }
 
   public connectedCallback(): void {
+    this.toolAbortController = new AbortController();
     this.initFromUrl();
     this.render();
     this.relocateSidebar(window.innerWidth <= 900);
@@ -87,48 +92,50 @@ export class CatalogView extends HTMLElement {
 
   public disconnectedCallback(): void {
     this.toolAbortController?.abort();
+    this.toolAbortController = null;
     this.resizeObserver?.disconnect();
     this.unsubscribeLang?.();
   }
 
   private registerWebMCPTools(): void {
     if (!document.modelContext?.registerTool) return;
-    this.toolAbortController?.abort();
-    this.toolAbortController = new AbortController();
-    const signal = this.toolAbortController.signal;
 
-    document.modelContext.registerTool({
-      name: 'list_items',
-      title: 'List Matching Products',
-      description: 'Retrieve catalog items matching currently active filters and keywords.',
-      inputSchema: { type: 'object', properties: {} },
-      annotations: { readOnlyHint: true },
-      execute: () => {
-        const filtered = this.getFilteredProducts();
-        return {
-          totalCount: filtered.length,
-          products: filtered.map(p => ({
-            id: p.id, name: p.name, price: p.price, rating: p.rating,
-            reviews: p.reviews, activities: p.activities, categories: p.categories,
-            conditions: p.conditions, weight: p.weight,
-          })),
-        };
-      },
-    }, { signal });
+    try {
+      document.modelContext.registerTool({
+        name: 'list_items',
+        title: 'List Matching Products',
+        description: 'Retrieve catalog items matching currently active filters and keywords.',
+        inputSchema: { type: 'object', properties: {} },
+        annotations: { readOnlyHint: true },
+        execute: () => {
+          const filtered = this.getFilteredProducts();
+          return {
+            totalCount: filtered.length,
+            products: filtered.map(p => ({
+              id: p.id, name: p.name, price: p.price, rating: p.rating,
+              reviews: p.reviews, activities: p.activities, categories: p.categories,
+              conditions: p.conditions, weight: p.weight,
+            })),
+          };
+        },
+      }, { signal: this.signal })?.catch(() => {});
 
-    document.modelContext.registerTool({
-      name: 'reset_filters',
-      title: 'Reset All Filters',
-      description: 'Clear all active catalog filters, categories, activities, conditions, brackets, and keywords.',
-      inputSchema: { type: 'object', properties: {} },
-      execute: () => {
-        this.filterState = createDefaultFilterState();
-        this.syncUrlAndRefresh();
-        return { success: true, message: 'All filters reset.' };
-      },
-    }, { signal });
+      document.modelContext.registerTool({
+        name: 'reset_filters',
+        title: 'Reset All Filters',
+        description: 'Clear all active catalog filters, categories, activities, conditions, brackets, and keywords.',
+        inputSchema: { type: 'object', properties: {} },
+        execute: () => {
+          this.filterState = createDefaultFilterState();
+          this.syncUrlAndRefresh();
+          return { success: true, message: 'All filters reset.' };
+        },
+      }, { signal: this.signal })?.catch(() => {});
 
-    registerCatalogSemanticFilterTool(signal);
+      registerCatalogSemanticFilterTool(this.signal);
+    } catch {
+      // Ignore if tools are already active
+    }
   }
 
   private async localize(): Promise<void> {
