@@ -28,7 +28,8 @@ import { FacetSidebar } from '../components/facets/FacetSidebar.ts';
 import { historyStore } from '../state/history-store.ts';
 import { translator } from '../utils/translator-helpers.ts';
 import { formatNumber } from '../utils/formatters.ts';
-import { registerCatalogSemanticFilterTool, interpretAndApplySemanticFilter, prewarmSemanticFilterSession } from '../ai/catalog-semantic-filter.ts';
+import { interpretAndApplySemanticFilter, prewarmSemanticFilterSession } from '../ai/catalog-semantic-filter.ts';
+import { semanticCatalogFilterSchema } from '../utils/filter-schemas.ts';
 import { ProductCard } from '../components/product/ProductCard.ts';
 
 export class CatalogView extends HTMLElement {
@@ -145,8 +146,18 @@ export class CatalogView extends HTMLElement {
         execute: () => this.resetFilters(),
       }, { signal: this.signal })?.catch(() => {});
 
-      // 3.2.4 Register the catalog semantic filter tool
-      registerCatalogSemanticFilterTool(this.signal);
+      // 3.2.4 Register the 'semantic_catalog_filter' tool
+      document.modelContext.registerTool({
+        name: 'semantic_catalog_filter',
+        title: 'Search the Catalog in Plain Language',
+        description: 'Search and filter the catalog using natural language. Analyzes user search query against the cached journey profile to determine and automatically apply the appropriate category, activity, condition, price, weight, rating, and keyword filters using the catalog WebMCP filter tools. This tool runs exclusively on the catalog page and uses cached journey state without mutating the recommendation engine.',
+        inputSchema: semanticCatalogFilterSchema,
+        execute: async (input: { query?: string }) => {
+          if (!input?.query) return { success: false, error: 'Query is required.' };
+          const result = await interpretAndApplySemanticFilter(input.query);
+          return { success: true, ...result };
+        },
+      }, { signal: this.signal })?.catch(() => {});
     } catch {
       // Ignore if tools are already active
     }

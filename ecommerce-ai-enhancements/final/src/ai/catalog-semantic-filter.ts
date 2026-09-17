@@ -22,7 +22,6 @@ import {
   type WeightRange,
   type RatingTier,
 } from '../utils/recommendation-schemas.ts';
-import { semanticCatalogFilterSchema } from '../utils/filter-schemas.ts';
 import { getPromptSession } from './prompt-api.ts';
 import type { JourneyProfile } from '../utils/journey-helpers.ts';
 import type { Product } from '../catalog/dataset.ts';
@@ -40,7 +39,7 @@ import { PRICE_RANGES, WEIGHT_RANGES, RATING_TIERS } from '../utils/filter-helpe
 
 export type { PriceRange, WeightRange, RatingTier };
 
-const SEMANTIC_FILTER_SYSTEM_PROMPT = `
+export const SEMANTIC_FILTER_SYSTEM_PROMPT = `
 You are the Intelligent Catalog Filter Assistant for Mont-Royal Plein Air.
 Your job is to translate a shopper's natural language search query into specific catalog facet filters, taking into account their perceived outdoor journey profile.
 
@@ -83,9 +82,10 @@ let warmSession: LanguageModel | null = null;
  * Runs only from a user interaction, since session creation requires transient activation.
  */
 export async function prewarmSemanticFilterSession(): Promise<void> {
-  // 3.3.1 Prewarm the semantic filter session
+  // 3.3.1 Check if warmSession already exists
   if (warmSession) return;
   try {
+    // 3.3.2 Prewarm a session with SEMANTIC_FILTER_SYSTEM_PROMPT
     warmSession = await getPromptSession(SEMANTIC_FILTER_SYSTEM_PROMPT);
   } catch {
     // The search creates its own session and surfaces the error there.
@@ -99,7 +99,6 @@ async function inferSearchFacets(
   searchTerm: string,
   cachedJourney: JourneyProfile | null
 ): Promise<{ parsed: SemanticFilterResponse; cacheHit: boolean }> {
-  // 3.3.2 Infer search facets with the Prompt API
   const normalizedQuery = searchTerm.trim().toLowerCase();
   const cacheKey = persistentCache.createKey(
     'semantic_search_v3',
@@ -116,7 +115,7 @@ async function inferSearchFacets(
     ? `Primary Activity: ${cachedJourney.primaryActivity} | Target Categories: ${(cachedJourney.targetCategories || []).join(', ')} | Implied Conditions: ${(cachedJourney.impliedConditions || []).join(', ')}`
     : 'No prior journey profile recorded.';
 
-  // Claims the prewarmed session if one exists, creating it now if not.
+  // 3.3.3 Claim the prewarmed session or create a new one
   const session = warmSession ?? (await getPromptSession(SEMANTIC_FILTER_SYSTEM_PROMPT));
   warmSession = null;
 
@@ -129,10 +128,11 @@ ${journeyContextText}
 Determine the optimal facet filters and optional material/feature keyword (e.g. "down"). Return the JSON object according to the schema.`.trim();
 
   try {
-    // `responseConstraint` makes the model emit a document that conforms to semanticFilterSchema.
+    // 3.3.4 Prompt the session with semanticFilterSchema responseConstraint
     const rawJson = await session.prompt(promptText, {
       responseConstraint: semanticFilterSchema,
     });
+    // 3.3.5 Parse the result, store in cache, and destroy the session
     const parsed = JSON.parse(rawJson) as SemanticFilterResponse;
     await persistentCache.set('ai_cache', cacheKey, parsed);
     return { parsed, cacheHit: false };
@@ -148,10 +148,10 @@ async function applyFacetsViaWebMCP(
   searchTerm: string,
   parsed: SemanticFilterResponse
 ): Promise<{ appliedFilters: SemanticFilterResult['appliedFilters']; toolsExecuted: string[] }> {
-  // 3.3.3 Apply facets via WebMCP
   const appliedFilters: SemanticFilterResult['appliedFilters'] = {};
   const toolsExecuted: string[] = [];
 
+  // 3.3.6 Discover registered tools on document.modelContext
   if (!document.modelContext?.getTools) {
     return { appliedFilters, toolsExecuted };
   }
@@ -214,40 +214,42 @@ async function applyFacetsViaWebMCP(
     return JSON.parse(result);
   };
 
-  // 1. Reset filters to clean slate
+  // 3.3.7 Reset filters to start with a clean slate
   await executeFacet('reset_filters', {});
 
-  // 2. Sequentially apply active facets for deterministic state transitions
+  // 3.3.8 Concurrently apply active facets via Promise.all
+  const facetTasks: Promise<unknown>[] = [];
   if (category) {
     appliedFilters.category = category;
-    await executeFacet('category_filter', { category, selected: true });
+    facetTasks.push(executeFacet('category_filter', { category, selected: true }));
   }
   if (activity) {
     appliedFilters.activity = activity;
-    await executeFacet('activity_filter', { activity, selected: true });
+    facetTasks.push(executeFacet('activity_filter', { activity, selected: true }));
   }
   if (conditions.length > 0) {
     appliedFilters.conditions = conditions;
     for (const cond of conditions) {
-      await executeFacet('condition_filter', { condition: cond, selected: true });
+      facetTasks.push(executeFacet('condition_filter', { condition: cond, selected: true }));
     }
   }
   if (priceRange) {
     appliedFilters.priceRange = priceRange;
-    await executeFacet('price_filter', { priceRange, selected: true });
+    facetTasks.push(executeFacet('price_filter', { priceRange, selected: true }));
   }
   if (weightRange) {
     appliedFilters.weightRange = weightRange;
-    await executeFacet('weight_filter', { weightRange, selected: true });
+    facetTasks.push(executeFacet('weight_filter', { weightRange, selected: true }));
   }
   if (minRating) {
     appliedFilters.minRating = minRating;
-    await executeFacet('rating_filter', { minRating, selected: true });
+    facetTasks.push(executeFacet('rating_filter', { minRating, selected: true }));
   }
   if (keyword) {
     appliedFilters.keyword = keyword;
-    await executeFacet('keyword_filter', { keyword });
+    facetTasks.push(executeFacet('keyword_filter', { keyword }));
   }
+  await Promise.all(facetTasks);
 
   // Removes inferred facets one at a time, most speculative first, until the list returns results.
   const isEmpty = async (): Promise<boolean> => {
@@ -282,14 +284,15 @@ async function applyFacetsViaWebMCP(
 }
 
 export async function interpretAndApplySemanticFilter(searchTerm: string): Promise<SemanticFilterResult> {
-  // 3.3.4 Orchestrate semantic filter execution
   const t0 = performance.now();
   const cachedJourney = await persistentCache.get<JourneyProfile>('ai_cache', 'latest_journey_profile');
   const t1 = performance.now();
 
+  // 3.3.9 Infer search facets from the query and cached journey
   const { parsed, cacheHit } = await inferSearchFacets(searchTerm, cachedJourney);
   const t2 = performance.now();
 
+  // 3.3.10 Apply the inferred facets via WebMCP
   const { appliedFilters, toolsExecuted } = await applyFacetsViaWebMCP(searchTerm, parsed);
   const t3 = performance.now();
 
@@ -320,23 +323,3 @@ export async function interpretAndApplySemanticFilter(searchTerm: string): Promi
   };
 }
 
-export function registerCatalogSemanticFilterTool(signal?: AbortSignal): void {
-  if (!document.modelContext?.registerTool) return;
-
-  try {
-    // 3.3.5 Register the 'semantic_catalog_filter' tool
-    document.modelContext.registerTool({
-      name: 'semantic_catalog_filter',
-      title: 'Search the Catalog in Plain Language',
-      description: 'Search and filter the catalog using natural language. Analyzes user search query against the cached journey profile to determine and automatically apply the appropriate category, activity, condition, price, weight, rating, and keyword filters using the catalog WebMCP filter tools. This tool runs exclusively on the catalog page and uses cached journey state without mutating the recommendation engine.',
-      inputSchema: semanticCatalogFilterSchema,
-      execute: async (input: { query?: string }) => {
-        if (!input?.query) return { success: false, error: 'Query is required.' };
-        const result = await interpretAndApplySemanticFilter(input.query);
-        return { success: true, ...result };
-      },
-    }, { signal })?.catch(() => {});
-  } catch {
-    // Ignore registration race
-  }
-}

@@ -124,10 +124,40 @@ export class SiteHeader extends HTMLElement {
     navigateTo(trimmed ? `/catalog?q=${encodeURIComponent(trimmed)}` : '/catalog');
   }
 
+  public search(query: string) {
+    const q = String(query || '').trim();
+    this.handleSearch(q);
+    return { success: true, navigatedTo: q ? `/catalog?q=${encodeURIComponent(q)}` : '/catalog' };
+  }
+
+  public goToCatalog(activity?: string, category?: string) {
+    let dest = '/catalog';
+    if (activity) dest = `/activity/${activity.toLowerCase().replace(/\s+/g, '-')}`;
+    else if (category) dest = `/catalog?category=${encodeURIComponent(category)}`;
+    navigateTo(dest);
+    return { success: true, navigatedTo: dest };
+  }
+
+  public getCategoriesAndActivities() {
+    return {
+      activities: ACTIVITIES.map(a => ({ name: a, url: `/activity/${a.toLowerCase().replace(/\s+/g, '-')}` })),
+      categories: PRODUCT_CATEGORIES.map(c => ({ name: c, url: `/catalog?category=${c}` })),
+    };
+  }
+
+  public goToProduct(productId: string) {
+    const pid = String(productId || '').trim();
+    if (!pid || !CATALOG.some(p => p.id === pid)) return { success: false, error: `Product "${pid}" not found.` };
+    navigateTo(`/catalog/${encodeURIComponent(pid)}`);
+    return { success: true, productId: pid, navigatedTo: `/catalog/${encodeURIComponent(pid)}` };
+  }
+
   private registerWebMCPTools(): void {
+    // 2.4.1 Test to see if WebMCP is supported
     if (!document.modelContext?.registerTool) return;
 
     try {
+      // 2.4.2 Register the 'search' tool
       document.modelContext.registerTool({
         name: 'search',
         title: 'Search the Store',
@@ -139,13 +169,10 @@ export class SiteHeader extends HTMLElement {
           },
           required: ['query'],
         },
-        execute: (input: { query: string }) => {
-          const q = String(input?.query || '').trim();
-          this.handleSearch(q);
-          return { success: true, navigatedTo: q ? `/catalog?q=${encodeURIComponent(q)}` : '/catalog' };
-        },
+        execute: (input: { query: string }) => this.search(input?.query),
       }, { signal: this.signal })?.catch(() => {});
 
+      // 2.4.3 Register the 'go_to_catalog' tool
       document.modelContext.registerTool({
         name: 'go_to_catalog',
         title: 'Open the Catalog',
@@ -157,27 +184,20 @@ export class SiteHeader extends HTMLElement {
             category: { type: 'string', enum: PRODUCT_CATEGORIES, description: 'Filter by product category' },
           },
         },
-        execute: (input: { activity?: string; category?: string }) => {
-          let dest = '/catalog';
-          if (input?.activity) dest = `/activity/${input.activity.toLowerCase().replace(/\s+/g, '-')}`;
-          else if (input?.category) dest = `/catalog?category=${encodeURIComponent(input.category)}`;
-          navigateTo(dest);
-          return { success: true, navigatedTo: dest };
-        },
+        execute: (input: { activity?: string; category?: string }) => this.goToCatalog(input?.activity, input?.category),
       }, { signal: this.signal })?.catch(() => {});
 
+      // 2.4.4 Register the 'get_categories_and_activities' tool
       document.modelContext.registerTool({
         name: 'get_categories_and_activities',
         title: 'Browse Categories and Activities',
         description: 'Retrieve valid outdoor activities and product categories with pre-filtered catalog URLs.',
         inputSchema: { type: 'object', properties: {} },
         annotations: { readOnlyHint: true },
-        execute: () => ({
-          activities: ACTIVITIES.map(a => ({ name: a, url: `/activity/${a.toLowerCase().replace(/\s+/g, '-')}` })),
-          categories: PRODUCT_CATEGORIES.map(c => ({ name: c, url: `/catalog?category=${c}` })),
-        }),
+        execute: () => this.getCategoriesAndActivities(),
       }, { signal: this.signal })?.catch(() => {});
 
+      // 2.4.5 Register the 'go_to_product' tool
       document.modelContext.registerTool({
         name: 'go_to_product',
         title: 'Open a Product Page',
@@ -189,12 +209,7 @@ export class SiteHeader extends HTMLElement {
           },
           required: ['productId'],
         },
-        execute: (input: { productId: string }) => {
-          const pid = String(input?.productId || '').trim();
-          if (!pid || !CATALOG.some(p => p.id === pid)) return { success: false, error: `Product "${pid}" not found.` };
-          navigateTo(`/catalog/${encodeURIComponent(pid)}`);
-          return { success: true, productId: pid, navigatedTo: `/catalog/${encodeURIComponent(pid)}` };
-        },
+        execute: (input: { productId: string }) => this.goToProduct(input?.productId),
       }, { signal: this.signal })?.catch(() => {});
     } catch {
       // Ignore if tools are already active

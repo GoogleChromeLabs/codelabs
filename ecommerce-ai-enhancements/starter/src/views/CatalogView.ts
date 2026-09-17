@@ -29,6 +29,7 @@ import { historyStore } from '../state/history-store.ts';
 import { translator } from '../utils/translator-helpers.ts';
 import { formatNumber } from '../utils/formatters.ts';
 import { interpretAndApplySemanticFilter, prewarmSemanticFilterSession } from '../ai/catalog-semantic-filter.ts';
+import { semanticCatalogFilterSchema } from '../utils/filter-schemas.ts';
 import { ProductCard } from '../components/product/ProductCard.ts';
 
 export class CatalogView extends HTMLElement {
@@ -39,6 +40,10 @@ export class CatalogView extends HTMLElement {
   private resizeObserver: ResizeObserver | null = null;
   private unsubscribeLang: (() => void) | null = null;
   private toolAbortController: AbortController | null = null;
+
+  private get signal(): AbortSignal | undefined {
+    return this.toolAbortController?.signal;
+  }
   private lastSemanticQuery: string | null = null;
   private isSemanticSearching: boolean = false;
   private activeSemanticQuery: string = '';
@@ -54,7 +59,9 @@ export class CatalogView extends HTMLElement {
 
   public attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void {
     if (oldValue !== newValue) {
-      if (name === 'mode') this.mode = newValue === 'activity' || newValue === 'category' ? newValue : 'catalog';
+      if (name === 'mode') {
+        this.mode = newValue === 'activity' || newValue === 'category' ? newValue : 'catalog';
+      }
       if (name === 'mode-value') this.modeValue = newValue || '';
       this.initFromUrl();
       this.updateView();
@@ -68,10 +75,6 @@ export class CatalogView extends HTMLElement {
     this.initFromUrl();
     this.updateView();
     this.maybeRunSemanticSearch();
-  }
-
-  private get signal(): AbortSignal | undefined {
-    return this.toolAbortController?.signal;
   }
 
   public connectedCallback(): void {
@@ -129,7 +132,7 @@ export class CatalogView extends HTMLElement {
 
       // 3.2.3 Register the 'reset_filters' tool
 
-      // 3.2.4 Register the catalog semantic filter tool
+      // 3.2.4 Register the 'semantic_catalog_filter' tool
 
     } catch {
       // Ignore if tools are already active
@@ -166,9 +169,8 @@ export class CatalogView extends HTMLElement {
       const match = PRODUCT_CATEGORIES.find(c => c.toLowerCase().replace(/\s+/g, '-') === this.modeValue.toLowerCase());
       if (match) this.filterState.selectedCategories = new Set([match]);
     } else if (this.filterState.selectedActivities.size > 0) {
-      const firstAct = Array.from(this.filterState.selectedActivities)[0];
-      const validAct = ACTIVITIES.find(a => a === firstAct);
-      if (validAct) historyStore.recordActivity(validAct);
+      const firstAct = ACTIVITIES.find(a => a === Array.from(this.filterState.selectedActivities)[0]);
+      if (firstAct) historyStore.recordActivity(firstAct);
     }
   }
 
@@ -184,7 +186,7 @@ export class CatalogView extends HTMLElement {
       try {
         await interpretAndApplySemanticFilter(query);
       } catch {
-        // Fallback gracefully
+        // Leaves the default filter state in place.
       } finally {
         this.isSemanticSearching = false;
         this.activeSemanticQuery = '';

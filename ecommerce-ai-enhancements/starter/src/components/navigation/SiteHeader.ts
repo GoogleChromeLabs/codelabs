@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { ACTIVITIES, type ActivityType } from '../../catalog/dataset.ts';
+import { ACTIVITIES, PRODUCT_CATEGORIES, CATALOG, type ActivityType } from '../../catalog/dataset.ts';
 import { cartStore } from '../../state/cart-store.ts';
 import { translator } from '../../utils/translator-helpers.ts';
 import { formatNumber } from '../../utils/formatters.ts';
@@ -38,7 +38,12 @@ export class SiteHeader extends HTMLElement {
     catalogLabel: 'Catalog',
   };
 
+  private get signal(): AbortSignal | undefined {
+    return this.toolAbortController?.signal;
+  }
+
   public connectedCallback(): void {
+    this.toolAbortController = new AbortController();
     this.render();
     this.unsubscribeCart = cartStore.subscribe(() => {
       const badge = this.querySelector('#cart-header-badge');
@@ -119,36 +124,50 @@ export class SiteHeader extends HTMLElement {
     navigateTo(trimmed ? `/catalog?q=${encodeURIComponent(trimmed)}` : '/catalog');
   }
 
+  public search(query: string) {
+    const q = String(query || '').trim();
+    this.handleSearch(q);
+    return { success: true, navigatedTo: q ? `/catalog?q=${encodeURIComponent(q)}` : '/catalog' };
+  }
+
+  public goToCatalog(activity?: string, category?: string) {
+    let dest = '/catalog';
+    if (activity) dest = `/activity/${activity.toLowerCase().replace(/\s+/g, '-')}`;
+    else if (category) dest = `/catalog?category=${encodeURIComponent(category)}`;
+    navigateTo(dest);
+    return { success: true, navigatedTo: dest };
+  }
+
+  public getCategoriesAndActivities() {
+    return {
+      activities: ACTIVITIES.map(a => ({ name: a, url: `/activity/${a.toLowerCase().replace(/\s+/g, '-')}` })),
+      categories: PRODUCT_CATEGORIES.map(c => ({ name: c, url: `/catalog?category=${c}` })),
+    };
+  }
+
+  public goToProduct(productId: string) {
+    const pid = String(productId || '').trim();
+    if (!pid || !CATALOG.some(p => p.id === pid)) return { success: false, error: `Product "${pid}" not found.` };
+    navigateTo(`/catalog/${encodeURIComponent(pid)}`);
+    return { success: true, productId: pid, navigatedTo: `/catalog/${encodeURIComponent(pid)}` };
+  }
+
   private registerWebMCPTools(): void {
-    /*
-     * TODO: Register navigation and discovery WebMCP tools on document.modelContext.
-     *
-     * Expected Implementation:
-     * When WebMCP is supported (document.modelContext?.registerTool):
-     * 1. 'search':
-     *    - title: 'Search the Store'
-     *    - description: Search the catalog using natural language or keywords by navigating to /catalog?q=<query>.
-     *    - inputSchema: { type: 'object', properties: { query: { type: 'string' } }, required: ['query'] }
-     *    - execute: (input) => { this.handleSearch(input.query); return { success: true, navigatedTo: ... }; }
-     *
-     * 2. 'go_to_catalog':
-     *    - title: 'Open the Catalog'
-     *    - description: Navigate to the equipment catalog page, optionally pre-filtering by activity or category.
-     *    - inputSchema: { type: 'object', properties: { activity: { type: 'string', enum: ACTIVITIES }, category: { type: 'string', enum: PRODUCT_CATEGORIES } } }
-     *    - execute: (input) => { ... navigateTo(...); return { success: true, navigatedTo: ... }; }
-     *
-     * 3. 'get_categories_and_activities':
-     *    - title: 'Browse Categories and Activities'
-     *    - description: Retrieve valid outdoor activities and product categories with pre-filtered catalog URLs.
-     *    - annotations: { readOnlyHint: true }
-     *    - execute: () => ({ activities: ..., categories: ... })
-     *
-     * 4. 'go_to_product':
-     *    - title: 'Open a Product Page'
-     *    - description: Navigate to the Product Details Page (PDP) for a specific product ID.
-     *    - inputSchema: { type: 'object', properties: { productId: { type: 'string' } }, required: ['productId'] }
-     *    - execute: (input) => { navigateTo(`/catalog/${encodeURIComponent(input.productId)}`); return { success: true, productId: ... }; }
-     */
+    void this.signal;
+
+    // 2.4.1 Test to see if WebMCP is supported
+
+    try {
+      // 2.4.2 Register the 'search' tool
+
+      // 2.4.3 Register the 'go_to_catalog' tool
+
+      // 2.4.4 Register the 'get_categories_and_activities' tool
+
+      // 2.4.5 Register the 'go_to_product' tool
+    } catch {
+      // Ignore if tools are already active
+    }
   }
 
   private updateSearchSlot(isCompact: boolean): void {
